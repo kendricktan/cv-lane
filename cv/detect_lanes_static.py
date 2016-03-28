@@ -21,6 +21,8 @@ YELLOW_HSV_RANGE = [([25, 230, 230], [50, 255, 255])]
 img_name = '../img/highway.jpg'
 img = cv2.imread(img_name)
 height, width, channels = img.shape
+height_dif = int(height/3)
+width_dif = int(width/4)
 
 # Crop img and convert to hsv
 img_roi = img[int(height/3):int(height*2/3), int(width/4):int(width*3/4)]
@@ -68,10 +70,10 @@ for thres in ROI_thres_list:
     # Metadata of contour
     x, y, w, h = cv2.boundingRect(cnt)
 
-    cv2.circle(img_roi, (x+w/2, y+h/2), w/2, (0, 0, 255), 2)
+    cv2.circle(img, (width_dif+x+w/2, height_dif+y+h/2), w/2, (0, 0, 255), 2)
 
 # Display img
-cv2.imshow('img', img_roi)
+cv2.imshow('img', img)
 #cv2.imshow('img blue', thres_blue)
 #cv2.imshow('img yellow', thres_yellow)
 cv2.waitKey(0)
