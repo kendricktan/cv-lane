@@ -1,18 +1,6 @@
 import cv2
 import numpy as np
 
-class LaneBox:
-    def __init__(self):
-        self.leftlane_top_xy = (0, 0)
-        self.leftlane_middle_xy = (0, 0)
-        self.leftlane_bottom_xy = (0, 0)
-        self.rightlane_top_xy = (0, 0)
-        self.rightlane_middle_xy = (0, 0)
-        self.rightlane_bottom_xy = (0, 0)
-
-    def self_print(self):
-        print('leftlane_top_xy: %s, leftlane-leftlane_middle_xy: %s, leftlane_bottom_xy: %s\nrightlane_top_xy: %s, rightline_middle_xy: %s, rightlane_bottom_xy: %s'.format(self.leftlane_top_xy, self.leftlane_middle_xy, self.leftlane_bottom_xy, self.rightlane_top_xy, self.rightlane_bottom_xy, self.rightlane_bottom_xy))
-
 # Get and read img data
 img_name = '../img/highway.jpg'
 img = cv2.imread(img_name)
