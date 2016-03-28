@@ -68,6 +68,7 @@ for cur_thres_dict in [thres_yellow_dict, thres_blue_dict]:
         temp_ = 'blue_'
 
     for key in cur_thres_dict:
+        # Gets image from dict
         cur_img = cur_thres_dict[key]
         _, contours, hierarchy = cv2.findContours(cur_img.copy(),cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -101,7 +102,7 @@ for cur_thres_dict in [thres_yellow_dict, thres_blue_dict]:
         except:
             # Blue is left lane, Yellow is right lane
             x = int(WIDTH_PADDING+cur_width/2)
-            y = int(cur_height/2) + int(HEIGHT_PADDING+h/2)
+            y = int(cur_height/2) + int(HEIGHT_PADDING+cur_height/2)
 
             if 'yellow' in temp_:
                 x += int(cur_width)
@@ -114,9 +115,27 @@ for cur_thres_dict in [thres_yellow_dict, thres_blue_dict]:
             contour_metadata[temp_key] = (x, y)
             cv2.circle(img, (x, y), 5, (0, 0, 255), 2)
 
+REGIONS_KEYS = ['top', 'middle', 'bottom']
+
+# Gets centered location for each region
+centered_coord = {}
+for REGION in REGIONS_KEYS:
+    left_xy = contour_metadata['blue_' + REGION]
+    right_xy = contour_metadata['yellow_' + REGION]
+    added_xy =(left_xy[0]+right_xy[0], left_xy[1]+right_xy[1]) 
+    centered_coord[REGION] = (int(added_xy[0]/2), int(added_xy[1]/2))
+    cv2.circle(img, centered_coord[REGION], 5, (0, 255, 0), 3)
+
+# Display lines
+cv2.line(img, centered_coord['top'], centered_coord['middle'], (255, 0, 0), 2)
+cv2.line(img, centered_coord['middle'], centered_coord['bottom'], (255, 0, 0), 2)
+
+cv2.line(img, contour_metadata['yellow_top'], contour_metadata['yellow_middle'], (0, 0, 255), 2)
+cv2.line(img, contour_metadata['yellow_middle'], contour_metadata['yellow_bottom'], (0, 0, 255), 2)
+cv2.line(img, contour_metadata['blue_top'], contour_metadata['blue_middle'], (0, 0, 255), 2)
+cv2.line(img, contour_metadata['blue_middle'], contour_metadata['blue_bottom'], (0, 0, 255), 2)
+
 # Display img
 cv2.imshow('img', img)
-#cv2.imshow('img blue', thres_blue)
-#cv2.imshow('img yellow', thres_yellow)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
