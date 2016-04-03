@@ -43,7 +43,7 @@ ROI_yellow = cv2.medianBlur(ROI_yellow, 5)
 ROI_yellow = cv2.cvtColor(ROI_yellow, cv2.COLOR_BGR2GRAY)
 ROI_yellow, thres_yellow = cv2.threshold(ROI_yellow, 127, 255, cv2.THRESH_BINARY)
 
-# Split contours into 3 sections: top, middle, and bottom 
+# Split contours into 3 sections: top, middle, and bottom
 thres_yellow_dict = {'top': thres_yellow[:int(roi_height/3), :], 'middle': thres_yellow[int(roi_height/3):int(roi_height*2/3), :], 'bottom': thres_yellow[int(roi_height*2/3):,]}
 thres_blue_dict = {'top': thres_blue[:int(roi_height/3), :], 'middle': thres_blue[int(roi_height/3):int(roi_height*2/3), :], 'bottom': thres_blue[int(roi_height*2/3):,]}
 
@@ -97,7 +97,7 @@ for cur_thres_dict in [thres_yellow_dict, thres_blue_dict]:
 
             if key == 'middle':
                 y += int(roi_height/3)
-            elif key == 'bottom': 
+            elif key == 'bottom':
                 y += int(roi_height*2/3)
 
             contour_metadata[temp_key] = (x, y)
@@ -110,7 +110,7 @@ centered_coord = {}
 for REGION in REGIONS_KEYS:
     left_xy = contour_metadata['blue_' + REGION]
     right_xy = contour_metadata['yellow_' + REGION]
-    added_xy =(left_xy[0]+right_xy[0], left_xy[1]+right_xy[1]) 
+    added_xy =(left_xy[0]+right_xy[0], left_xy[1]+right_xy[1])
     centered_coord[REGION] = (int(added_xy[0]/2), int(added_xy[1]/2))
     cv2.circle(img, centered_coord[REGION], 5, (0, 255, 0), 3)
 
