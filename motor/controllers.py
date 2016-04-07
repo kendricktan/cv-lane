@@ -12,7 +12,7 @@ class BlastGPIO(object):
         self.max_threshold = max_threshold
 
         # Neutral value
-        self.neutral_val = int((self.max_threshold + self.min_threshold)/2) 
+        self.neutral_val = int((self.max_threshold + self.min_threshold)/2)
 
     # Blast value into port
     def blast_value(self, val):
@@ -22,6 +22,10 @@ class BlastGPIO(object):
     def blast_neutral(self):
         n = str(int((self.max_threshold + self.min_threshold)/2))
         os.system('echo P1-' + str(self.GPIO_no) + '=' + n + 'us > /dev/servoblaster')
+
+    # Gets the neutral value
+    def get_neutral_val(self):
+        return self.neutral_val
 
 
 class MotorController(BlastGPIO):
@@ -34,7 +38,7 @@ class MotorController(BlastGPIO):
 
     # Runs motors
     def run(self):
-        speed_val = super(self.__class__, self).neutral_val
+        speed_val = super(self.__class__, self).get_neutral_val()
         speed_val += 5*self.speed
         super(self.__class__, self).blast_value(speed_val)
 
