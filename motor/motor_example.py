@@ -1,17 +1,21 @@
-from BlastGPIO import *
+from controllers import *
 import time
 
-# Creates an instance of BlasterGPIO
-servo = BlastGPIO(12)
+# If you wanna use Pin 20 e.g.
+# mainMotor = MotorController(GPIO_no=20)
+mainMotor = MotorController() # Using default Pin 16
 
-# 1000us (turns left or right depending on configuration)
-servo.blast_value(1000)
+# Motor values are in range -100 <= x <= 100
+mainMotor.run_speed(40)
 
-time.sleep(2)
+time.sleep(1)
 
-# 2000us
-servo.blast_value(2000)
+mainMotor.stop()
 
-time.sleep(2)
+time.sleep(1)
 
-servo.blast_value(1500)
+mainMotor.run_speed(-40)
+
+time.sleep(1)
+
+mainMotor.stop()
