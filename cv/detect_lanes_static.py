@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from settings import *
 
 # Get and read img data
 img_name = '../img/highway.jpg'
@@ -8,11 +9,6 @@ height, width, channels = img.shape
 height_dif = int(height/3)
 width_dif = int(width/4)
 
-# Threshold Settings
-BLUE_HSV_RANGE = [([110, 230, 230], [130, 255, 255])]
-YELLOW_HSV_RANGE = [([25, 230, 230], [50, 255, 255])]
-HEIGHT_PADDING = int(height/3)
-WIDTH_PADDING = int(width/4)
 
 # Crop img and convert to hsv
 img_roi = img[HEIGHT_PADDING:HEIGHT_PADDING*2, WIDTH_PADDING:int(WIDTH_PADDING*3)]

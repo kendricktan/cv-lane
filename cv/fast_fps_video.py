@@ -5,6 +5,7 @@ from imutils.video import FPS
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 from fractions import Fraction
+from settings import *
 import argparse
 import imutils
 import time
@@ -18,12 +19,13 @@ args = vars(ap.parse_args())
 
 # created a *threaded *video stream, allow the camera sensor to warmup,
 # and start the FPS counter
-vs = PiVideoStream()
+vs = PiVideoStream(resolution=(CAMERA_WIDTH, CAMERA_HEIGHT))
 
 # Camera settings
-vs.camera.shutter_speed = 100000
-vs.awb_mode = 'off'
-vs.awb_gains = (0.5, 0.5)
+vs.camera.shutter_speed = SHUTTER
+vs.exposure = EXPOSURE
+vs.camera.awb_mode = AWB_MODE
+vs.camera.awb_gains = AWB_GAINS
 
 # Start camera
 vs.start()
