@@ -61,21 +61,25 @@ class ServoController(BlastGPIO):
     def toggle_dir(self):
         self.toggle_val = -self.toggle_val
 
+    # Turns
+    def turn(self, isLeft):
+        turn_val = super(self.__class__, self).get_neutral_val()
+        turn_val += (5*self.value*self.toggle_val)
+        super(self.__class__, self).blast_value(turn_val)
+
     # Turns left
     # value range is between 0-100
     # larger the value, the greater the angle of turn
     def turn_left(self, value):
-        turn_val = super(self.__class__, self).neutral_val
-        turn_val += (5*self.speed*self.toggle_val)
-        super(self.__class__, self).blast_value(turn_val)
+        self.value = value
+        self.turn(True)
 
     # Turns right
     # value range is between 0-100
     # larger the value, the greater the angle of turning
     def turn_right(self, value):
-        turn_val = super(self.__class__, self).neutral_val
-        turn_val -= (5*self.speed*self.toggle_val)
-        super(self.__class__, self).blast_value(turn_val)
+        self.value = value
+        self.turn(False)
 
     # Straigthens servo
     def straighten(self):
