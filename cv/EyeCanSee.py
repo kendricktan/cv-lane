@@ -27,7 +27,10 @@ class EyeCanSee(object):
         self.start_camera() # Starts our camera
 
         # debug mode on?
-        self.debug = debug 
+        self.debug = debug
+
+        if self.debug:
+            cv2.namedWindow('img')
 
     # Starts camera (needs to be called before run)
     def start_camera(self):
@@ -39,7 +42,7 @@ class EyeCanSee(object):
         self.camera_started = False
         self.vs.stop()
 
-    # Grabs frame from camera 
+    # Grabs frame from camera
     def grab_frame(self):
         # Starts camera if it hasn't been started
         if not self.camera_started:
@@ -119,11 +122,11 @@ class EyeCanSee(object):
                 # Means we're too far off to the left or right
                 except:
                     # Blue is left lane, Yellow is right lane
-                    x = int(settings.WIDTH_PADDING+self.cur_width/2)
-                    y = int(self.cur_height/2) + int(settings.HEIGHT_PADDING+self.cur_height/2)
+                    x = int(settings.WIDTH_PADDING+cur_width/2)
+                    y = int(cur_height/2) + int(settings.HEIGHT_PADDING+cur_height/2)
 
                     if 'yellow' in temp_:
-                        x += int(self.cur_width)
+                        x += int(cur_width)
 
                     if key == 'middle':
                         y += int(self.roi_height/3)
@@ -134,6 +137,8 @@ class EyeCanSee(object):
 
                     if self.debug:
                         cv2.circle(self.img, (x, y), 5, (0, 0, 255), 2)
+
+        return contour_metadata
 
     # Gets the centered coord of the detected lines
     def get_centered_coord(self):
@@ -164,8 +169,13 @@ class EyeCanSee(object):
         # Find center between lanes (we wanna try to be in there)
         self.center_coord = self.get_centered_coord()
 
+        if self.debug:
+            cv2.imshow('img', self.img)
+            cv2.waitKey(0)
+
     # Destructor
     def __del__(self):
         self.vs.stop()
+        cv2.destroyAllWindows()
 
 
