@@ -17,9 +17,12 @@ class EyeCanSee(object):
 
         # Camera settings
         self.vs.camera.shutter_speed = settings.SHUTTER
-        self.vs.exposure = settings.EXPOSURE
-        self.vs.camera.awb_mode = settings.AWB_MODE
+        self.vs.camera.exposure_mode = settings.EXPOSURE_MODE
+        self.vs.camera.exposure_compensation = settings.EXPOSURE_COMPENSATION
         self.vs.camera.awb_gains = settings.AWB_GAINS
+        self.vs.camera.awb_mode = settings.AWB_MODE
+        self.vs.camera.saturation = settings.SATURATION
+        self.vs.camera.video_stabilization = settings.VIDEO_STABALIZATION
 
         # Has camera started
         self.camera_started = False
@@ -49,7 +52,7 @@ class EyeCanSee(object):
     # Normalizes our image
     def normalize_img(self):
         # Crop img and convert to hsv
-        self.img_roi = self.img[settings.HEIGHT_PADDING:settings.HEIGHT_PADDING*2, settings.WIDTH_PADDING:int(settings.WIDTH_PADDING*3)]
+        self.img_roi = self.img[settings.HEIGHT_PADDING:settings.HEIGHT_PADDING*2, :]
         self.img_roi_hsv = cv2.cvtColor(self.img_roi, cv2.COLOR_BGR2HSV)
 
         # Get our ROI's shape
@@ -73,8 +76,24 @@ class EyeCanSee(object):
     # Gets metadata from our contours
     def get_contour_metadata(self):
         # Split contours into 3 sections: top, middle, and bottom
-        thres_yellow_dict = {'top': self.thres_yellow[:int(self.roi_height/3), :], 'middle': self.thres_yellow[int(self.roi_height/3):int(self.roi_height*2/3), :], 'bottom': self.thres_yellow[int(self.roi_height*2/3):,]}
-        thres_blue_dict = {'top': self.thres_blue[:int(self.roi_height/3), :], 'middle': self.thres_blue[int(self.roi_height/3):int(self.roi_height*2/3), :], 'bottom': self.thres_blue[int(self.roi_height*2/3):,]}
+        thres_yellow_dict = {}
+        thres_blue_dict = {}
+        for REGION in settings.REGIONS_KEYS:
+            if REGION == 'top':
+                thres_yellow_dict['top'] = self.thres_yellow[:int(self.roi_height/3)]
+                thres_blue_dict['top'] = self.thres_blue[:int(self.roi_height/3), :]
+
+            elif REGION == 'middle':
+                thres_yellow_dict['middle'] = self.thres_yellow[int(self.roi_height/3):int(self.roi_height*2/3), :]
+                thres_blue_dict['middle'] = self.thres_blue[int(self.roi_height/3):int(self.roi_height*2/3), :]
+
+            elif REGION =='bottom':
+                thres_yellow_dict['bottom'] = self.thres_yellow[int(self.roi_height*2/3):,]
+                thres_blue_dict['bottom'] = self.thres_blue[int(self.roi_height*2/3):,]
+
+
+        #thres_yellow_dict = {'top': self.thres_yellow[:int(self.roi_height/3), :], 'middle': self.thres_yellow[int(self.roi_height/3):int(self.roi_height*2/3), :], 'bottom': self.thres_yellow[int(self.roi_height*2/3):,]}
+        #thres_blue_dict = {'top': self.thres_blue[:int(self.roi_height/3), :], 'middle': self.thres_blue[int(self.roi_height/3):int(self.roi_height*2/3), :], 'bottom': self.thres_blue[int(self.roi_height*2/3):,]}
 
         # Metadata (x,y,w,h)for our ROI
         contour_metadata = {}

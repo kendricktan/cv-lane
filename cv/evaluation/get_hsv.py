@@ -1,7 +1,7 @@
 # Import parent path (to get settings.py)
 import os.path, sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-
+import argparse
 import cv2
 import numpy as np
 import time
@@ -9,11 +9,12 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 from settings import *
 
+parser = argparse.ArgumentParser(description='get_hsv values')
+parser.add_argument('--auto', help='use auto settings instead of the ones from settings.py')
+args = parser.parse_args()
+
 WIDTH = CAMERA_WIDTH
 HEIGHT = CAMERA_HEIGHT
-
-x_co = 0
-y_co = 0
 
 hsv = None
 frame= None
@@ -34,11 +35,17 @@ def on_mouse(event,x,y,flag,param):
 # Get video feed and set camera parameters
 camera = PiCamera()
 camera.resolution = (WIDTH, HEIGHT)
-camera.awb_mode = AWB_MODE
-camera.awb_gains = AWB_GAINS
-camera.exposure = EXPOSURE
-camera.shutter_spped = SHUTTER
-camera.framerate = 32
+
+# If we're using custom settings
+if not args.auto:
+    camera.awb_gains = AWB_GAINS
+    camera.awb_mode = AWB_MODE
+    camera.exposure_mode = EXPOSURE_MODE
+    camera.exposure_compensation = EXPOSURE_COMPENSATION
+    camera.shutter_spped = SHUTTER
+    camera.saturation = SATURATIONo_stabilization = VIDEO_STABALIZATION
+    camera.video_stabilization = VIDEO_STABALIZATION
+    camera.framerate = 32
 
 rawCapture = PiRGBArray(camera, size=(CAMERA_WIDTH, CAMERA_HEIGHT))
 
@@ -46,6 +53,15 @@ stream = camera.capture_continuous(rawCapture, format='bgr', use_video_port=True
 
 # Warm camera up
 time.sleep(2.0)
+
+# Print camera settings (if in auto)
+if args.auto:
+    print('awb_gain:', camera.awb_gains)
+    print('awb_mode:', camera.awb_mode)
+    print('exposure_compensation:', camera.exposure_mode)
+    print('exposure_compensation:', camera.exposure_compensation)
+    print('shutter_speed:', camera.shutter_speed)
+    print('saturation:', camera.saturation)
 
 # Cv window
 cv2.namedWindow('camera')
