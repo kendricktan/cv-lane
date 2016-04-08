@@ -29,9 +29,6 @@ class EyeCanSee(object):
         # debug mode on?
         self.debug = debug
 
-        if self.debug:
-            cv2.namedWindow('img')
-
     # Starts camera (needs to be called before run)
     def start_camera(self):
         self.camera_started = True
@@ -155,7 +152,7 @@ class EyeCanSee(object):
 
     # Where are we relative to our lane
     def where_lane_be(self):
-        # Camera init
+        # Camera grab frame and normalize it
         self.grab_frame()
         self.normalize_img()
 
@@ -172,6 +169,27 @@ class EyeCanSee(object):
         if self.debug:
             cv2.imshow('img', self.img)
             cv2.waitKey(0)
+
+    # Use this to calculate fps
+    def calculate_fps(self, frames_no=100):
+        fps = FPS().start()
+
+        # Don't wanna display window
+        if self.debug:
+            self.debug = not self.debug
+
+        for i in range(0, frames_no):
+            self.where_lane_be()
+            fps.update()
+
+        fps.stop()
+
+        # Don't wanna display window
+        if not self.debug:
+            self.debug = not self.debug
+
+        print('Time taken: {:.2f}'.format(fps.elapsed()))
+        print('~ FPS : {:.2f}'.format(fps.fps()))
 
     # Destructor
     def __del__(self):
