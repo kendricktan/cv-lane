@@ -1,5 +1,5 @@
 class PID:
-    def __init__(self, p=3.0, i=0.0, d=0.0, derivator=0, integrator=0, integrator_max=50, integrator_min=-50):
+    def __init__(self, p=.1, i=0.0, d=0.0, derivator=0, integrator=0, integrator_max=50, integrator_min=-50):
         self.kp = p
         self.ki = i
         self.kd = d
@@ -9,11 +9,10 @@ class PID:
         self.integrator_max = integrator_max
         self.integrator_min = integrator_min
 
-        self.set_point = 0.0
-        self.error = 0.0
+        self.error = 0
 
-    def update(self, cur_val):
-        self.error = self.set_point - cur_val
+    def update(self, error):
+        self.error = error
 
         self.p_val = self.kp * self.error
         self.d_val = self.kd * (self.error-self.derivator)

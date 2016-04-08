@@ -201,7 +201,7 @@ class EyeCanSee(object):
     def get_errors(self):
         relative_error = {}
         for REGION in settings.REGIONS_KEYS:
-            relative_error[REGION] = centered_coord[REGION] - self.center
+            relative_error[REGION] = self.center_coord[REGION][0] - self.center
         return relative_error
 
     # Where are we relative to our lane
