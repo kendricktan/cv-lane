@@ -11,7 +11,7 @@ import numpy as np
 import settings
 
 class EyeCanSee(object):
-    def __init__(self, debug=False):
+    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False):
         # Our video stream
         self.vs = PiVideoStream(resolution=(settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT))
 
@@ -29,8 +29,38 @@ class EyeCanSee(object):
 
         self.start_camera() # Starts our camera
 
+        # To calculate our error in positioning
+        self.center = center
+
         # debug mode on?
         self.debug = debug
+
+    # Mouse event handler for get_hsv
+    def on_mouse(self, event, x, y, flag, param):
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            # Circle to indicate hsv location, and update frame
+            cv2.circle(self.img, (x, y), 3, (0, 0, 255))
+            cv2.imshow('hsv_extractor', self.img)
+
+            # Print values
+            values = self.hsv_frame[y, x]
+            print('H:', values[0], '\tS:', values[1], '\tV:', values[2])
+
+    def get_hsv(self):
+        cv2.namedWindow('hsv_extractor')
+        while True:
+            self.grab_frame()
+            self.hsv_frame = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
+
+            # Mouse handler
+            cv2.setMouseCallback('hsv_extractor', self.on_mouse, 0)
+            cv2.imshow('hsv_extractor', self.img)
+
+            key = cv2.waitKey(0) & 0xFF
+            if key == ord('q'):
+                break
+        self.stop_camera()
+        cv2.destroyAllWindows()
 
     # Starts camera (needs to be called before run)
     def start_camera(self):
@@ -52,7 +82,7 @@ class EyeCanSee(object):
     # Normalizes our image
     def normalize_img(self):
         # Crop img and convert to hsv
-        self.img_roi = self.img[settings.HEIGHT_PADDING:settings.HEIGHT_PADDING*2, :]
+        self.img_roi = np.copy(self.img[settings.HEIGHT_PADDING:int(settings.HEIGHT_PADDING+20), :])
         self.img_roi_hsv = cv2.cvtColor(self.img_roi, cv2.COLOR_BGR2HSV)
 
         # Get our ROI's shape
@@ -66,12 +96,9 @@ class EyeCanSee(object):
             upper = np.array(upper, dtype='uint8')
 
             mask = cv2.inRange(self.img_roi_hsv, lower, upper)
-            ROI_masked = cv2.bitwise_and(self.img_roi_hsv, self.img_roi_hsv, mask=mask)
 
-        ROI_masked = cv2.medianBlur(ROI_masked, 5)
-        ROI_masked = cv2.cvtColor(ROI_masked, cv2.COLOR_BGR2GRAY)
-        ROI_masked, thres = cv2.threshold(ROI_masked, 127, 255, cv2.THRESH_BINARY)
-        return ROI_masked, thres
+        smoothen = cv2.medianBlur(mask, 5)
+        return smoothen
 
     # Gets metadata from our contours
     def get_contour_metadata(self):
@@ -138,7 +165,8 @@ class EyeCanSee(object):
                 # Means we're too far off to the left or right
                 except:
                     # Blue is left lane, Yellow is right lane
-                    x = int(settings.WIDTH_PADDING+cur_width/2)
+
+                    x = int(settings.WIDTH_PADDING)
                     y = int(cur_height/2) + int(settings.HEIGHT_PADDING+cur_height/2)
 
                     if 'yellow' in temp_:
@@ -169,6 +197,13 @@ class EyeCanSee(object):
                 cv2.circle(self.img, centered_coord[REGION], 5, (0, 255, 0), 3)
         return centered_coord
 
+    # Gets the error of the centered coordinates
+    def get_errors(self):
+        relative_error = {}
+        for REGION in settings.REGIONS_KEYS:
+            relative_error[REGION] = centered_coord[REGION] - self.center
+        return relative_error
+
     # Where are we relative to our lane
     def where_lane_be(self):
         # Camera grab frame and normalize it
@@ -176,8 +211,8 @@ class EyeCanSee(object):
         self.normalize_img()
 
         # Filter out them colors
-        self.ROI_blue, self.thres_blue = self.filter_smooth_thres(settings.BLUE_HSV_RANGE)
-        self.ROI_yellow, self.thres_yellow = self.filter_smooth_thres(settings.YELLOW_HSV_RANGE)
+        self.thres_blue = self.filter_smooth_thres(settings.BLUE_HSV_RANGE)
+        self.thres_yellow = self.filter_smooth_thres(settings.YELLOW_HSV_RANGE)
 
         # Get contour meta data
         self.contour_metadata = self.get_contour_metadata()
@@ -185,9 +220,16 @@ class EyeCanSee(object):
         # Find center between lanes (we wanna try to be in there)
         self.center_coord = self.get_centered_coord()
 
+        # Gets relative error
+        self.relative_error = self.get_errors()
+
         if self.debug:
             cv2.imshow('img', self.img)
-            cv2.waitKey(0)
+            #cv2.imshow('img_roi', self.img_roi)
+            #cv2.imshow('img_hsv', self.img_roi_hsv)
+            #cv2.imshow('thres_blue', self.thres_blue)
+            #cv2.imshow('thres_yellow', self.thres_yellow)
+            key = cv2.waitKey(0) & 0xFF
 
     # Use this to calculate fps
     def calculate_fps(self, frames_no=100):

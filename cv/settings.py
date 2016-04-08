@@ -10,9 +10,9 @@ CAMERA_WIDTH = 320
 CAMERA_HEIGHT = 240
 
 # Thresholding parameters
-BLUE_HSV_RANGE = [([110, 230, 230], [130, 255, 255])]
-YELLOW_HSV_RANGE = [([25, 230, 230], [50, 255, 255])]
-HEIGHT_PADDING = int(CAMERA_HEIGHT/3)
+BLUE_HSV_RANGE = [([20, 140, 220], [50, 190, 255])] #[([30, 30, 60], [80, 80, 90])]
+YELLOW_HSV_RANGE = [([20, 140, 220], [50, 190, 255])]  #[([25, 230, 230], [50, 255, 255])]
+HEIGHT_PADDING = int(CAMERA_HEIGHT/2.5)
 WIDTH_PADDING = 0#int(CAMERA_WIDTH/4)
 
 REGIONS_KEYS = ['middle'] # ['top', 'middle', 'bottom']
