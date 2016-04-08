@@ -18,9 +18,9 @@ for region in settings.REGIONS_KEYS:
 motor = MotorController() # values: -100 <= x <= 100
 steering = ServoController() # values: 0 <= x <= 100
 
-motor.run_speed(10)
+motor.run_speed(20)
 
-for i in range(0, 5):
+for i in range(0, 125):
     # Trys and get our lane
     camera.where_lane_be()
 
@@ -41,4 +41,7 @@ for i in range(0, 5):
             total_pid = 100
         steering.turn_right(abs(total_pid))
 
+    time.sleep(0.01)
+
+steering.straighten()
 motor.stop()
