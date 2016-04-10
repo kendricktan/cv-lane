@@ -16,4 +16,4 @@ YELLOW_HSV_RANGE = [([0, 190, 120], [20, 220, 175])]  #[([25, 230, 230], [50, 25
 HEIGHT_PADDING = int(CAMERA_HEIGHT/2.5)
 WIDTH_PADDING = 0#int(CAMERA_WIDTH/4)
 
-REGIONS_KEYS = ['middle'] # ['top', 'middle', 'bottom']
+REGIONS_KEYS = ['middle'] #['top', 'middle', 'bottom']

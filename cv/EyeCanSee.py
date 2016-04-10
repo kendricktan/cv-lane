@@ -11,7 +11,7 @@ import numpy as np
 import settings
 
 class EyeCanSee(object):
-    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False, key_to_continue=True):
+    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False):
         # Our video stream
         self.vs = PiVideoStream(resolution=(settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT))
 
@@ -27,11 +27,13 @@ class EyeCanSee(object):
 
         # Has camera started
         self.camera_started = False
-
         self.start_camera() # Starts our camera
 
         # To calculate our error in positioning
         self.center = center
+
+        # To determine if we actually detected lane or not
+        self.detected_lane = {}
 
         # debug mode on?
         self.debug = debug
@@ -166,6 +168,8 @@ class EyeCanSee(object):
 
                     contour_metadata[temp_key] = (x, y)
 
+                    self.detected_lane[temp_key] = True
+
                     if self.debug:
                         cv2.circle(self.img, (x, y), 5, (0, 0, 255), 2)
 
@@ -187,6 +191,7 @@ class EyeCanSee(object):
 
                     contour_metadata[temp_key] = (x, y)
 
+                    self.detected_lane[temp_key] = False
                     if self.debug:
                         cv2.circle(self.img, (x, y), 5, (0, 0, 255), 2)
 
@@ -237,7 +242,6 @@ class EyeCanSee(object):
             #cv2.imshow('img_hsv', self.img_roi_hsv)
             cv2.imshow('thres_blue', self.thres_blue)
             cv2.imshow('thres_yellow', self.thres_yellow)
-            #if self.key_to_continue:
             key = cv2.waitKey(0) & 0xFF
 
     # Use this to calculate fps
