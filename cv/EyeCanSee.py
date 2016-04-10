@@ -166,7 +166,7 @@ class EyeCanSee(object):
 
                     contour_metadata[temp_key] = (x, y)
 
-                    self.detected_lane[temp_key] = True
+                    self.detected_lane[key] = True
 
                     if self.debug:
                         cv2.circle(self.img, (x, y), 5, (0, 0, 255), 2)
@@ -189,7 +189,7 @@ class EyeCanSee(object):
 
                     contour_metadata[temp_key] = (x, y)
 
-                    self.detected_lane[temp_key] = False
+                    self.detected_lane[key] = False
                     if self.debug:
                         cv2.circle(self.img, (x, y), 5, (0, 0, 255), 2)
 
