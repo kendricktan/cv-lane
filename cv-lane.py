@@ -12,9 +12,11 @@ import cv.settings
 camera = EyeCanSee()
 
 # PID for each region (if we do decide to add any)
+previous_values = {}
 pid = {}
 for region in settings.REGIONS_KEYS:
     pid[region] = PID(p=.35, i=.125, d=.075, integrator_max=50, integrator_min=-50)
+    previous_values[region] = 0.0
 
 # Kalman filter
 measurement_standard_deviation = 0
@@ -22,6 +24,7 @@ process_variance = 15
 estimated_measurement_variance = measurement_standard_deviation ** 2  # 0.05 ** 2
 kalman_filter = KalmanFilter(process_variance, estimated_measurement_variance)
 
+# Controllers
 motor = MotorController() # values: -100 <= x <= 100
 steering = ServoController() # values: 0 <= x <= 100
 
@@ -34,10 +37,19 @@ for i in range(0, 125):
     # Pid on each region
     total_pid = 0
     for region in camera.relative_error:
-        kalman_filter.input_latest_noisy_measurement(camera.relative_error[region])
-        filtered_value = kalman_filter.get_latest_estimated_measurement()
-        #print(filtered_value)
-        total_pid += pid[region].update(filtered_value)
+        # If it detects lane, then use that region, otherwise
+        # use previous value
+        if camera.detected_lane[region]:
+            # Filters out irregular values
+            kalman_filter.input_latest_noisy_measurement(camera.relative_error[region])
+            filtered_value = kalman_filter.get_latest_estimated_measurement()
+
+            # Add pid to previous value and total_pid value
+            previous_values[region] = filtered_value
+            total_pid += pid[region].update(filtered_value)
+        else:
+            total_pid += previous_values[region]
+
     # Negative total_pid = need to turn left
     # Positive total_pid = need to turn right
     # Try to keep pid 0

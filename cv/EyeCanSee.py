@@ -38,8 +38,6 @@ class EyeCanSee(object):
         # debug mode on?
         self.debug = debug
 
-        # Press key to continue
-        self.key_to_continue = key_to_continue
 
     # Mouse event handler for get_hsv
     def on_mouse(self, event, x, y, flag, param):

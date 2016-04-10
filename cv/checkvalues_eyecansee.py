@@ -1,6 +1,6 @@
 from EyeCanSee import *
 
-camera = EyeCanSee(debug=True, key_to_continue=False)
+camera = EyeCanSee(debug=True)
 
 while True:
     camera.where_lane_be()
