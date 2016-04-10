@@ -11,18 +11,27 @@ import cv.settings
 # Our class instances
 camera = EyeCanSee()
 
-# PID for each region (if we do decide to add any)
-previous_values = {}
-pid = {}
-for region in settings.REGIONS_KEYS:
-    pid[region] = PID(p=.35, i=.125, d=.075, integrator_max=50, integrator_min=-50)
-    previous_values[region] = 0.0
-
 # Kalman filter
 measurement_standard_deviation = 0
 process_variance = 15
 estimated_measurement_variance = measurement_standard_deviation ** 2  # 0.05 ** 2
-kalman_filter = KalmanFilter(process_variance, estimated_measurement_variance)
+kalman_filter = {}
+
+# previous values (in case can't detect line)
+# we'll go and continue previous location
+previous_values = {}
+
+# PID for each region (if we do decide to add any)
+p_ = {'top': 0.122, 'middle': 0.05, 'bottom': 0.065}
+i_ = {'top': 0.022, 'middle': 0.031, 'bottom': 0.04}
+d_ = {'top': 0.1, 'middle': 0.1, 'bottom': 0.12}
+pid = {}
+
+for region in settings.REGIONS_KEYS:
+    pid[region] = PID(p=p_[region], i=i_[region], d=d_[region], integrator_max=50, integrator_min=-50)
+    previous_values[region] = 0.0
+    kalman_filter[region] = KalmanFilter(process_variance, estimated_measurement_variance)
+
 
 # Controllers
 motor = MotorController() # values: -100 <= x <= 100
@@ -41,8 +50,8 @@ for i in range(0, 125):
         # use previous value
         if camera.detected_lane[region]:
             # Filters out irregular values
-            kalman_filter.input_latest_noisy_measurement(camera.relative_error[region])
-            filtered_value = kalman_filter.get_latest_estimated_measurement()
+            kalman_filter[region].input_latest_noisy_measurement(camera.relative_error[region])
+            filtered_value = kalman_filter[region].get_latest_estimated_measurement()
 
             # Add pid to previous value and total_pid value
             previous_values[region] = filtered_value
@@ -64,10 +73,6 @@ for i in range(0, 125):
         steering.turn_right(abs(total_pid))
 
     time.sleep(0.01)
-
-motor.run_speed(-25)
-
-time.sleep(2.5)
 
 steering.straighten()
 motor.stop()
