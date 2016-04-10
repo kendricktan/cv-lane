@@ -64,7 +64,10 @@ class ServoController(BlastGPIO):
     # Turns
     def turn(self, isLeft):
         turn_val = super(self.__class__, self).get_neutral_val()
-        turn_val += (5*self.value*self.toggle_val)
+        if isLeft:
+            turn_val += (5*self.value*self.toggle_val)
+        else:
+            turn_val -= (5*self.value*self.toggle_val)
         super(self.__class__, self).blast_value(turn_val)
 
     # Turns left

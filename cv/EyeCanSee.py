@@ -11,7 +11,7 @@ import numpy as np
 import settings
 
 class EyeCanSee(object):
-    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False):
+    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False, key_to_continue=True):
         # Our video stream
         self.vs = PiVideoStream(resolution=(settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT))
 
@@ -22,6 +22,7 @@ class EyeCanSee(object):
         self.vs.camera.awb_gains = settings.AWB_GAINS
         self.vs.camera.awb_mode = settings.AWB_MODE
         self.vs.camera.saturation = settings.SATURATION
+        self.vs.camera.rotation = settings.ROTATION
         self.vs.camera.video_stabilization = settings.VIDEO_STABALIZATION
 
         # Has camera started
@@ -34,6 +35,9 @@ class EyeCanSee(object):
 
         # debug mode on?
         self.debug = debug
+
+        # Press key to continue
+        self.key_to_continue = key_to_continue
 
     # Mouse event handler for get_hsv
     def on_mouse(self, event, x, y, flag, param):
@@ -83,7 +87,7 @@ class EyeCanSee(object):
     def normalize_img(self):
         # Crop img and convert to hsv
         self.img_roi = np.copy(self.img[settings.HEIGHT_PADDING:int(settings.HEIGHT_PADDING+20), :])
-        self.img_roi_hsv = cv2.cvtColor(self.img_roi, cv2.COLOR_BGR2HSV)
+        self.img_roi_hsv = cv2.cvtColor(self.img_roi, cv2.COLOR_BGR2HSV).copy()
 
         # Get our ROI's shape
         self.roi_height, self.roi_width, self.roi_channels = self.img_roi.shape
@@ -98,6 +102,10 @@ class EyeCanSee(object):
             mask = cv2.inRange(self.img_roi_hsv, lower, upper)
 
         smoothen = cv2.medianBlur(mask, 5)
+
+        # Morphological transformation
+        kernel = np.ones((5,5),np.uint8)
+        smoothen = cv2.morphologyEx(smoothen, cv2.MORPH_OPEN, kernel, iterations=5)
         return smoothen
 
     # Gets metadata from our contours
@@ -227,8 +235,9 @@ class EyeCanSee(object):
             cv2.imshow('img', self.img)
             #cv2.imshow('img_roi', self.img_roi)
             #cv2.imshow('img_hsv', self.img_roi_hsv)
-            #cv2.imshow('thres_blue', self.thres_blue)
-            #cv2.imshow('thres_yellow', self.thres_yellow)
+            cv2.imshow('thres_blue', self.thres_blue)
+            cv2.imshow('thres_yellow', self.thres_yellow)
+            #if self.key_to_continue:
             key = cv2.waitKey(0) & 0xFF
 
     # Use this to calculate fps

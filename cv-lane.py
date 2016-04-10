@@ -13,7 +13,7 @@ camera = EyeCanSee()
 # PID for each region (if we do decide to add any)
 pid = {}
 for region in settings.REGIONS_KEYS:
-    pid[region] = PID()
+    pid[region] = PID(p=.35, i=.125, d=.305, integrator_max=10, integrator_min=-10)
 
 motor = MotorController() # values: -100 <= x <= 100
 steering = ServoController() # values: 0 <= x <= 100
@@ -42,6 +42,10 @@ for i in range(0, 125):
         steering.turn_right(abs(total_pid))
 
     time.sleep(0.01)
+
+motor.run_speed(-25)
+
+time.sleep(2.5)
 
 steering.straighten()
 motor.stop()

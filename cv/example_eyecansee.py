@@ -1,8 +1,8 @@
 from EyeCanSee import *
 
-camera = EyeCanSee(debug=True)
+camera = EyeCanSee(debug=True, key_to_continue=False)
 
-for i in range(0, 5):
+while True:
     camera.where_lane_be()
 
 #camera.calculate_fps()
