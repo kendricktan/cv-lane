@@ -24,6 +24,9 @@ class EyeCanSee(object):
         self.vs.camera.saturation = settings.SATURATION
         self.vs.camera.rotation = settings.ROTATION
         self.vs.camera.video_stabilization = settings.VIDEO_STABALIZATION
+        self.vs.camera.ISO = settings.ISO
+        self.vs.camera.brightness = settings.BRIGHTNESS
+        self.vs.camera.contrast = settings.CONTRAST
 
         # Has camera started
         self.camera_started = False
@@ -72,6 +75,8 @@ class EyeCanSee(object):
         self.vs.start()
         time.sleep(2.0) # Wait for camera to cool
 
+    cv2.setNumThreads(4)
+        
     def stop_camera(self):
         self.camera_started = False
         self.vs.stop()
@@ -240,7 +245,7 @@ class EyeCanSee(object):
             #cv2.imshow('img_hsv', self.img_roi_hsv)
             cv2.imshow('thres_blue', self.thres_blue)
             cv2.imshow('thres_yellow', self.thres_yellow)
-            key = cv2.waitKey(0) & 0xFF
+            key = cv2.waitKey(1) & 0xFF # Change 1 to 0 to pause between frames
 
     # Use this to calculate fps
     def calculate_fps(self, frames_no=100):
