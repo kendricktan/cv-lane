@@ -1,6 +1,7 @@
 from __future__ import print_function
 from imutils.video.pivideostream import PiVideoStream
 from imutils.video import FPS
+from imutils.video import WebcamVideoStream
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 import argparse
@@ -11,22 +12,29 @@ import numpy as np
 import settings
 
 class EyeCanSee(object):
-    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False):
+    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False, is_usb_webcam=False):
         # Our video stream
-        self.vs = PiVideoStream(resolution=(settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT))
+        # If its not a usb webcam then get pi camera
+        if not is_usb_webcam:
+            self.vs = PiVideoStream(resolution=(settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT))
+            # Camera settings
+            self.vs.camera.shutter_speed = settings.SHUTTER
+            self.vs.camera.exposure_mode = settings.EXPOSURE_MODE
+            self.vs.camera.exposure_compensation = settings.EXPOSURE_COMPENSATION
+            self.vs.camera.awb_gains = settings.AWB_GAINS
+            self.vs.camera.awb_mode = settings.AWB_MODE
+            self.vs.camera.saturation = settings.SATURATION
+            self.vs.camera.rotation = settings.ROTATION
+            self.vs.camera.video_stabilization = settings.VIDEO_STABALIZATION
+            self.vs.camera.ISO = settings.ISO
+            self.vs.camera.brightness = settings.BRIGHTNESS
+            self.vs.camera.contrast = settings.CONTRAST
 
-        # Camera settings
-        self.vs.camera.shutter_speed = settings.SHUTTER
-        self.vs.camera.exposure_mode = settings.EXPOSURE_MODE
-        self.vs.camera.exposure_compensation = settings.EXPOSURE_COMPENSATION
-        self.vs.camera.awb_gains = settings.AWB_GAINS
-        self.vs.camera.awb_mode = settings.AWB_MODE
-        self.vs.camera.saturation = settings.SATURATION
-        self.vs.camera.rotation = settings.ROTATION
-        self.vs.camera.video_stabilization = settings.VIDEO_STABALIZATION
-        self.vs.camera.ISO = settings.ISO
-        self.vs.camera.brightness = settings.BRIGHTNESS
-        self.vs.camera.contrast = settings.CONTRAST
+        # Else get the usb camera
+        else:
+            self.vs = WebcamVideoStream(src=0)
+            self.vs.stream.set(cv2.CAP_PROP_FRAME_WIDTH, settings.CAMERA_WIDTH)
+            self.vs.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, settings.CAMERA_HEIGHT)
 
         # Has camera started
         self.camera_started = False
@@ -75,8 +83,6 @@ class EyeCanSee(object):
         self.vs.start()
         time.sleep(2.0) # Wait for camera to cool
 
-    cv2.setNumThreads(4)
-        
     def stop_camera(self):
         self.camera_started = False
         self.vs.stop()
