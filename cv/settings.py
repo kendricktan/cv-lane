@@ -15,13 +15,10 @@ BRIGHTNESS = 50
 PROP_FORMAT = 1
 
 # Thresholding parameters
-# Red Elec Tape BLUE_HSV_RANGE = [([0, 80, 100], [15, 120, 130])] #[([30, 30, 60], [80, 80, 90])]
-# Red Elec Tape YELLOW_HSV_RANGE = [([0, 80, 100], [15, 120, 130])]  #[([25, 230, 230], [50, 255, 255])]
-
 BLUE_HSV_RANGE = [([100, 15, 140], [135, 50, 180])] #[([30, 30, 60], [80, 80, 90])]
 YELLOW_HSV_RANGE = [([100, 15, 140], [135, 50, 180])]  #[([25, 230, 230], [50, 255, 255])]
 HEIGHT_PADDING = int(CAMERA_HEIGHT/2)
-WIDTH_PADDING = 0#int(CAMERA_WIDTH/4)
+WIDTH_PADDING = 0
 
 REGIONS_KEYS = ['top', 'middle', 'bottom']
 
