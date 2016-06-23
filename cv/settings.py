@@ -4,14 +4,14 @@ AWB_GAINS = (1.65, 2.30)
 SATURATION = -5 # If too yellow/green adjust this
 EXPOSURE_MODE = 'sports'
 EXPOSURE_COMPENSATION = 10
-SHUTTER = 1985 # measured in microseconds
+SHUTTER = 0 # measured in microseconds
 VIDEO_STABALIZATION = True
 ROTATION = 0
 CAMERA_WIDTH = 720
 CAMERA_HEIGHT = 240
-ISO = 800
-CONTRAST = 50
-BRIGHTNESS = 75
+ISO = 0
+CONTRAST = 0
+BRIGHTNESS = 50
 PROP_FORMAT = 1
 
 # Thresholding parameters
