@@ -1,9 +1,9 @@
 # Camera parameters
 AWB_MODE = 'off' # auto white balance
-AWB_GAINS = (1.65, 2.30)
-SATURATION = -5 # If too yellow/green adjust this
+AWB_GAINS = (1.30, 1.90)
+SATURATION = 0 # If too yellow/green adjust this
 EXPOSURE_MODE = 'sports'
-EXPOSURE_COMPENSATION = 10
+EXPOSURE_COMPENSATION = 0
 SHUTTER = 0 # measured in microseconds
 VIDEO_STABALIZATION = True
 ROTATION = 0
@@ -20,6 +20,6 @@ YELLOW_HSV_RANGE = [([100, 15, 140], [135, 50, 180])]  #[([25, 230, 230], [50, 2
 HEIGHT_PADDING = int(CAMERA_HEIGHT/2)
 WIDTH_PADDING = 0
 
-REGIONS_KEYS = ['top', 'middle', 'bottom']
+REGIONS_KEYS = ['middle'] #['top', 'middle', 'bottom']
 
 FRAMES = 65 #How many frames to do CV for (runs at ~37 FPS on pi 2)

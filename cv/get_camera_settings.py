@@ -27,6 +27,8 @@ with picamera.PiCamera() as camera:
     print('ISO\t\t|\t%5.2f' % camera.ISO)
     print('Shutter Speed\t|\t%5.2f' % camera.shutter_speed)
     print('Saturation\t|\t%5.2f' % camera.saturation)
+    print('Exposure Mode\t|\t%s' % camera.exposure_mode)
+    print('Exposure Compensation\t|\t%5.2f' % camera.exposure_compensation)
 
 
 # Construct a numpy array from the stream
