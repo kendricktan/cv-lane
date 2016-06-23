@@ -1,5 +1,5 @@
 # Kalman filter | KalmanFilter(VAR, EST_VAR)
-STD_DEV = 25
+STD_DEV = 15
 VAR = 10
 EST_VAR = STD_DEV ** 2
 

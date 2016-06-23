@@ -1,6 +1,19 @@
-print("Initialising...")
+from cv.EyeCanSee import *
+from ai.pid import *
+from ai.KalmanFilter import *
+from controller.controllers import *
+from etc.etc import * # The etc functions dumped into there
 
 import RPi.GPIO as GPIO  # Import the GPIO library
+import time
+import commands
+import os
+import sys
+import threading
+import ai.aisettings as aisettings
+import cv.cvsettings as cvsettings
+
+print("Initialising...")
 
 GPIO.setmode(GPIO.BOARD)  # Required to setup the naming convention
 GPIO.setwarnings(False)  # Ignore annoying warnings
@@ -8,46 +21,26 @@ GPIO.setup(11, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Arming pin is input
 GPIO.setup(40, GPIO.OUT)  # LED pin is output
 GPIO.output(40, 1)  # Set LED pin to "high" or on
 
-from cv.EyeCanSee import *
-from ai.pid import *
-from ai.KalmanFilter import *
-from controller.controllers import *
-import time
-import commands
-import os
-import sys
-import threading
-
 output = commands.getoutput('ps -A')
+
 if 'servod' in output:
     print("Servo Blaster process found.")
 else:
     print("Servo Blaster process not found. Starting it now.")
     os.system("echo terminator | sudo service servoblaster start")
 
-
-def map_func(x, in_min, in_max, out_min, out_max):
-    return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min
-
-
 # Our class instances
 camera = EyeCanSee()
 
 # Kalman filter
-measurement_standard_deviation = 15
-process_variance = 10
-estimated_measurement_variance = measurement_standard_deviation ** 2  # 0.05 ** 2
-kalman_filter = KalmanFilter(process_variance, estimated_measurement_variance)
+kalman_filter = KalmanFilter(aisettings.VAR, aisettings.EST_VAR)
 
 # previous values (in case can't detect line)
 # we'll go and continue previous location
 previous_value_ = 0.0
 
 # PID for each region (if we do decide to add any)
-p_ = 0.025
-i_ = 0.027
-d_ = 0.042
-pid = PID(p=p_, i=i_, d=d_)
+pid = PID(p=aisettings.P_, i=aisettings.I_, d=aisettings.D_)
 
 # Controllers
 motor = MotorController()  # values: -100 <= x <= 100
@@ -74,14 +67,12 @@ for i in range(0, 5):
     GPIO.output(40, 0)
     time.sleep(0.25)
 
-
 def status():
     global t
     sys.stdout.write('\r')
     sys.stdout.write(" ")
     sys.stdout.flush()
     t = threading.Timer(1, status).start()
-
 
 status()  # Start the first "thread" for blinking dot
 time.sleep(0.5)  # Leave a 0.5 second delay so it alternates (ie blinks)
@@ -97,15 +88,16 @@ def status2():
 
 status2()  # start the second "thread" for blinking dot
 
-motor.run_speed(35)  # Start moving forward
-# camera.debug = True # Show a live view of the video and CV
+# Start moving forward
+motor.run_speed(35)
 
 for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     while (GPIO.input(11) == 1):
         motor.stop()  # Reset throttle
         steering.straighten()  # Reset steering
 
-    camera.where_lane_be()  # Trys and get our lane
+    # Trys and get our lane
+    camera.where_lane_be()
 
     total_pid = 0
 
@@ -144,6 +136,10 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
 # Turn everything off now that we're done and exit the program
 steering.straighten()
 motor.stop()
-GPIO.output(40, 0)  # LED
+
+# LED
+GPIO.output(40, 0)
 print("Finished running CV.  Now exiting the program.")
-os.system('kill $PPID')  # Kill the threads from the blinking dot
+
+# Kill the threads from the blinking dot
+os.system('kill $PPID')
