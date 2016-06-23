@@ -1,18 +1,15 @@
-from __future__ import print_function
-from imutils.video.pivideostream import PiVideoStream
-from imutils.video import FPS
-from imutils.video import WebcamVideoStream
-from picamera.array import PiRGBArray
-from picamera import PiCamera
-import argparse
-import imutils
 import time
+
 import cv2
 import numpy as np
 import settings
+from imutils.video import FPS
+from imutils.video import WebcamVideoStream
+from imutils.video.pivideostream import PiVideoStream
+
 
 class EyeCanSee(object):
-    def __init__(self, center=int(settings.CAMERA_WIDTH/2), debug=False, is_usb_webcam=False):
+    def __init__(self, center=int(settings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False):
         # Our video stream
         # If its not a usb webcam then get pi camera
         if not is_usb_webcam:
@@ -38,17 +35,16 @@ class EyeCanSee(object):
 
         # Has camera started
         self.camera_started = False
-        self.start_camera() # Starts our camera
+        self.start_camera()  # Starts our camera
 
         # To calculate our error in positioning
         self.center = center
 
         # To determine if we actually detected lane or not
-        self.detected_lane = {}
+        self.detected_lane = False
 
         # debug mode on?
         self.debug = debug
-
 
     # Mouse event handler for get_hsv
     def on_mouse(self, event, x, y, flag, param):
@@ -81,7 +77,7 @@ class EyeCanSee(object):
     def start_camera(self):
         self.camera_started = True
         self.vs.start()
-        time.sleep(2.0) # Wait for camera to cool
+        time.sleep(2.0)  # Wait for camera to cool
 
     def stop_camera(self):
         self.camera_started = False
@@ -98,7 +94,7 @@ class EyeCanSee(object):
     # Normalizes our image
     def normalize_img(self):
         # Crop img and convert to hsv
-        self.img_roi = np.copy(self.img[settings.HEIGHT_PADDING:int(settings.HEIGHT_PADDING+20), :])
+        self.img_roi = np.copy(self.img[settings.HEIGHT_PADDING:int(settings.HEIGHT_PADDING + 20), :])
         self.img_roi_hsv = cv2.cvtColor(self.img_roi, cv2.COLOR_BGR2HSV).copy()
 
         # Get our ROI's shape
@@ -113,11 +109,10 @@ class EyeCanSee(object):
 
             mask = cv2.inRange(self.img_roi_hsv, lower, upper)
 
-
         blurred = cv2.medianBlur(mask, 5)
 
         # Morphological transformation
-        kernel = np.ones((2,2),np.uint8)
+        kernel = np.ones((2, 2), np.uint8)
         smoothen = cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
 
         if self.debug:
@@ -129,107 +124,77 @@ class EyeCanSee(object):
 
     # Gets metadata from our contours
     def get_contour_metadata(self):
-        # Split contours into 3 sections: top, middle, and bottom
-        thres_yellow_dict = {}
-        thres_blue_dict = {}
-        for REGION in settings.REGIONS_KEYS:
-            if REGION == 'top':
-                thres_yellow_dict['top'] = self.thres_yellow[:int(self.roi_height/3)]
-                thres_blue_dict['top'] = self.thres_blue[:int(self.roi_height/3), :]
-
-            elif REGION == 'middle':
-                thres_yellow_dict['middle'] = self.thres_yellow[int(self.roi_height/3):int(self.roi_height*2/3), :]
-                thres_blue_dict['middle'] = self.thres_blue[int(self.roi_height/3):int(self.roi_height*2/3), :]
-
-            elif REGION =='bottom':
-                thres_yellow_dict['bottom'] = self.thres_yellow[int(self.roi_height*2/3):,]
-                thres_blue_dict['bottom'] = self.thres_blue[int(self.roi_height*2/3):,]
-
 
         # Metadata (x,y,w,h)for our ROI
         contour_metadata = {}
-        for cur_thres_dict in [thres_yellow_dict, thres_blue_dict]:
-            if cur_thres_dict is thres_yellow_dict:
-                temp_ = 'yellow_'
+        for cur_img in [self.thres_yellow, self.thres_blue]:
+            key = ''
+            # Blue is left lane, Yellow is right lane
+            if cur_img is self.thres_yellow:
+                key = 'right'
             else:
-                temp_ = 'blue_'
+                key = 'left'
 
-            for key in cur_thres_dict:
-                # Gets image from dict
-                cur_img = cur_thres_dict[key]
-                _, contours, hierarchy = cv2.findContours(cur_img.copy(),cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            _, contours, hierarchy = cv2.findContours(cur_img.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-                cur_height, cur_width = cur_img.shape
+            cur_height, cur_width = cur_img.shape
 
-                temp_key = temp_ + key
-                # Get index of largest contour
-                try:
-                    areas = [cv2.contourArea(c) for c in contours]
-                    max_index = np.argmax(areas)
-                    cnt = contours[max_index]
+            # Get index of largest contour
+            try:
+                areas = [cv2.contourArea(c) for c in contours]
+                max_index = np.argmax(areas)
+                cnt = contours[max_index]
 
-                    # Metadata of contour
-                    x, y, w, h = cv2.boundingRect(cnt)
+                # Metadata of contour
+                x, y, w, h = cv2.boundingRect(cnt)
 
-                    # Normalize it to the original picture
-                    if key == 'middle':
-                        y += int(self.roi_height/3)
-                    elif key == 'bottom':
-                        y += int(self.roi_height*2/3)
+                # Normalize it to the original picture
+                x += int(settings.WIDTH_PADDING + w / 2)
+                y += int(settings.HEIGHT_PADDING + h / 2)
 
-                    x += int(settings.WIDTH_PADDING+w/2)
-                    y += int(settings.HEIGHT_PADDING+h/2)
+                contour_metadata[key] = (x, y)
 
-                    contour_metadata[temp_key] = (x, y)
+                self.detected_lane = True
 
-                    self.detected_lane[key] = True
+                if self.debug:
+                    cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
 
-                    if self.debug:
-                        cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
+            # If it throws an error then it doesn't have a ROI
+            # Means we're too far off to the left or right
+            except:
+                # Blue is left lane, Yellow is right lane
 
-                # If it throws an error then it doesn't have a ROI
-                # Means we're too far off to the left or right
-                except:
-                    # Blue is left lane, Yellow is right lane
+                x = int(settings.WIDTH_PADDING)
+                y = int(cur_height / 2) + int(settings.HEIGHT_PADDING + cur_height / 2)
 
-                    x = int(settings.WIDTH_PADDING)
-                    y = int(cur_height/2) + int(settings.HEIGHT_PADDING+cur_height/2)
+                if 'yellow' in key:
+                    x += int(cur_width)
 
-                    if 'yellow' in temp_:
-                        x += int(cur_width)
+                contour_metadata[key] = (x, y)
 
-                    if key == 'middle':
-                        y += int(self.roi_height/3)
-                    elif key == 'bottom':
-                        y += int(self.roi_height*2/3)
+                self.detected_lane = False
 
-                    contour_metadata[temp_key] = (x, y)
-
-                    self.detected_lane[key] = False
-                    if self.debug:
-                        cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
+                if self.debug:
+                    cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
 
         return contour_metadata
 
     # Gets the centered coord of the detected lines
     def get_centered_coord(self):
-        centered_coord = {}
-        for REGION in settings.REGIONS_KEYS:
-            left_xy = self.contour_metadata['blue_' + REGION]
-            right_xy = self.contour_metadata['yellow_' + REGION]
-            added_xy =(left_xy[0]+right_xy[0], left_xy[1]+right_xy[1])
-            centered_coord[REGION] = (int(added_xy[0]/2), int(added_xy[1]/2))
+        centered_coord = None
+        left_xy = self.contour_metadata['left']
+        right_xy = self.contour_metadata['right']
+        added_xy = (left_xy[0] + right_xy[0], left_xy[1] + right_xy[1])
+        centered_coord = (int(added_xy[0] / 2), int(added_xy[1] / 2))
 
-            if self.debug:
-                cv2.circle(self.img_debug, centered_coord[REGION], 5, (0, 255, 0), 3)
+        if self.debug:
+            cv2.circle(self.img_debug, centered_coord, 5, (0, 255, 0), 3)
+
         return centered_coord
 
-    # Gets the error of the centered coordinates
+    # Gets the error of the centered coordinates (x)
     def get_errors(self):
-        relative_error = {}
-        for REGION in settings.REGIONS_KEYS:
-            relative_error[REGION] = self.center_coord[REGION][0] - self.center
-        return relative_error
+        return self.center_coord[0] - self.center
 
     # Where are we relative to our lane
     def where_lane_be(self):
@@ -256,7 +221,7 @@ class EyeCanSee(object):
             cv2.imshow('img_hsv', self.img_roi_hsv)
             cv2.imshow('thres_blue', self.thres_blue)
             cv2.imshow('thres_yellow', self.thres_yellow)
-            key = cv2.waitKey(1) & 0xFF # Change 1 to 0 to pause between frames
+            key = cv2.waitKey(1) & 0xFF  # Change 1 to 0 to pause between frames
 
     # Use this to calculate fps
     def calculate_fps(self, frames_no=100):
@@ -305,11 +270,7 @@ class EyeCanSee(object):
 
         cv2.destroyAllWindows()
 
-
-
     # Destructor
     def __del__(self):
         self.vs.stop()
         cv2.destroyAllWindows()
-
-

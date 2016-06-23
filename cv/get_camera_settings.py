@@ -22,7 +22,7 @@ with picamera.PiCamera() as camera:
 
     print('---Settings---')
     print('AWB mode\t|\t%s' % camera.awb_mode)
-    print('AWB\t\t|\t%s' % (camera.awb_gains, ))
+    print('AWB\t\t|\t%s' % (camera.awb_gains,))
     print('Brightness\t|\t%5.2f' % camera.brightness)
     print('Contrast\t|\t%5.2f' % camera.contrast)
     print('ISO\t\t|\t%5.2f' % camera.ISO)
@@ -30,7 +30,6 @@ with picamera.PiCamera() as camera:
     print('Saturation\t|\t%5.2f' % camera.saturation)
     print('Exposure Mode\t|\t%s' % camera.exposure_mode)
     print('Exposure Compensation\t|\t%5.2f' % camera.exposure_compensation)
-
 
 # Construct a numpy array from the stream
 data = np.fromstring(stream.getvalue(), dtype=np.uint8)

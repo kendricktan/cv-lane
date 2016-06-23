@@ -15,7 +15,7 @@ class PID:
         self.error = error
 
         self.p_val = self.kp * self.error
-        self.d_val = self.kd * (self.error-self.derivator)
+        self.d_val = self.kd * (self.error - self.derivator)
         self.derivator = self.error
 
         self.integrator = self.integrator + self.error
@@ -25,7 +25,7 @@ class PID:
         elif self.integrator < self.integrator_min:
             self.integrator = self.integrator_min
 
-        self.i_val = self.integrator*self.ki
+        self.i_val = self.integrator * self.ki
 
         pid = self.p_val + self.i_val + self.d_val
 

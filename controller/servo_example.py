@@ -3,7 +3,7 @@ import time
 
 # If you wanna use Pin 20 e.g.
 # mainMotor = MotorController(GPIO_no=20)
-mainServo = ServoController() # Using default Pin 12
+mainServo = ServoController()  # Using default Pin 12
 
 time.sleep(1)
 
