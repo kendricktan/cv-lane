@@ -1,13 +1,13 @@
 # Camera parameters
 AWB_MODE = 'off' # auto white balance
-AWB_GAINS = (1.65, 1.45)
-SATURATION = -35 # If too yellow/green adjust this
+AWB_GAINS = (1.65, 2.30)
+SATURATION = -5 # If too yellow/green adjust this
 EXPOSURE_MODE = 'sports'
 EXPOSURE_COMPENSATION = 10
-SHUTTER = 20000 # 0.035 seconds (measured in microseconds)
+SHUTTER = 1985 # measured in microseconds
 VIDEO_STABALIZATION = True
-ROTATION = 90
-CAMERA_WIDTH = 640
+ROTATION = 0
+CAMERA_WIDTH = 720
 CAMERA_HEIGHT = 240
 ISO = 800
 CONTRAST = 50
