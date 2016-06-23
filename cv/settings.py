@@ -1,14 +1,17 @@
 # Camera parameters
-AWB_MODE = 'auto' # auto white balance
+AWB_MODE = 'fluorescent'
+# AWB_MODE choices: 'off','auto','sunlight','cloudy','shade','tungsten','fluorescent','incandescent','flash','horizon'
+EXPOSURE_MODE = 'sports'
+# Exposure mode choices: 'off','auto','night','nightpreview','backlight','spotlight','sports','snow','beach','verylong','fixedfps','antishake','fireworks'
+
 AWB_GAINS = (1.40, 1.90)
 SATURATION = 0 # If too yellow/green adjust this
-EXPOSURE_MODE = 'auto'
 EXPOSURE_COMPENSATION = 0
 SHUTTER = 0 # measured in microseconds
 VIDEO_STABALIZATION = True
 ROTATION = 0
 CAMERA_WIDTH = 720
-CAMERA_HEIGHT = 240
+CAMERA_HEIGHT = 480
 ISO = 0
 CONTRAST = 0
 BRIGHTNESS = 50
