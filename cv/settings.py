@@ -1,7 +1,7 @@
 # Camera parameters
 AWB_MODE = 'fluorescent'
 # AWB_MODE choices: 'off','auto','sunlight','cloudy','shade','tungsten','fluorescent','incandescent','flash','horizon'
-EXPOSURE_MODE = 'sports'
+EXPOSURE_MODE = 'night'
 # Exposure mode choices: 'off','auto','night','nightpreview','backlight','spotlight','sports','snow','beach','verylong','fixedfps','antishake','fireworks'
 
 AWB_GAINS = (1.40, 1.90)
@@ -18,8 +18,8 @@ BRIGHTNESS = 50
 PROP_FORMAT = 1
 
 # Thresholding parameters
-BLUE_HSV_RANGE = [([0, 255, 0], [0, 255, 25])]  # [([30, 30, 60], [80, 80, 90])]
-YELLOW_HSV_RANGE = [([10, 220, 100], [20, 255, 140])]  # [([25, 230, 230], [50, 255, 255])]
+BLUE_HSV_RANGE = [([0, 255, 10], [20, 255, 80])]  # [([30, 30, 60], [80, 80, 90])]
+YELLOW_HSV_RANGE = [([10, 220, 140], [20, 255, 190])]  # [([25, 230, 230], [50, 255, 255])]
 HEIGHT_PADDING = int(CAMERA_HEIGHT / 2)
 WIDTH_PADDING = 0
 
