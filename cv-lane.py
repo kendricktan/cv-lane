@@ -100,7 +100,7 @@ status2()  # start the second "thread" for blinking dot
 motor.run_speed(35)  # Start moving forward
 # camera.debug = True # Show a live view of the video and CV
 
-for i in range(0, settings.FRAMES):  # For the amount of frames we want CV on
+for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     while (GPIO.input(11) == 1):
         motor.stop()  # Reset throttle
         steering.straighten()  # Reset steering
