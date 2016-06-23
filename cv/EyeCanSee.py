@@ -93,6 +93,7 @@ class EyeCanSee(object):
         if not self.camera_started:
             self.start_camera()
         self.img = self.vs.read()
+        self.img_debug = self.img.copy()
 
     # Normalizes our image
     def normalize_img(self):
@@ -105,18 +106,25 @@ class EyeCanSee(object):
 
     # Smooth image and convert to bianry image (threshold)
     # Filter out colors that are not within the RANGE value
-    def filter_smooth_thres(self, RANGE):
+    def filter_smooth_thres(self, RANGE, color):
         for (lower, upper) in RANGE:
             lower = np.array(lower, dtype='uint8')
             upper = np.array(upper, dtype='uint8')
 
             mask = cv2.inRange(self.img_roi_hsv, lower, upper)
 
-        smoothen = cv2.medianBlur(mask, 5)
+
+        blurred = cv2.medianBlur(mask, 5)
 
         # Morphological transformation
-        kernel = np.ones((5,5),np.uint8)
-        smoothen = cv2.morphologyEx(smoothen, cv2.MORPH_OPEN, kernel, iterations=5)
+        kernel = np.ones((2,2),np.uint8)
+        smoothen = cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
+
+        if self.debug:
+            cv2.imshow('mask ' + color, mask)
+            cv2.imshow('blurred ' + color, blurred)
+            cv2.imshow('smoothen ' + color, smoothen)
+
         return smoothen
 
     # Gets metadata from our contours
@@ -137,9 +145,6 @@ class EyeCanSee(object):
                 thres_yellow_dict['bottom'] = self.thres_yellow[int(self.roi_height*2/3):,]
                 thres_blue_dict['bottom'] = self.thres_blue[int(self.roi_height*2/3):,]
 
-
-        #thres_yellow_dict = {'top': self.thres_yellow[:int(self.roi_height/3), :], 'middle': self.thres_yellow[int(self.roi_height/3):int(self.roi_height*2/3), :], 'bottom': self.thres_yellow[int(self.roi_height*2/3):,]}
-        #thres_blue_dict = {'top': self.thres_blue[:int(self.roi_height/3), :], 'middle': self.thres_blue[int(self.roi_height/3):int(self.roi_height*2/3), :], 'bottom': self.thres_blue[int(self.roi_height*2/3):,]}
 
         # Metadata (x,y,w,h)for our ROI
         contour_metadata = {}
@@ -180,7 +185,7 @@ class EyeCanSee(object):
                     self.detected_lane[key] = True
 
                     if self.debug:
-                        cv2.circle(self.img, (x, y), 5, (0, 0, 255), 2)
+                        cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
 
                 # If it throws an error then it doesn't have a ROI
                 # Means we're too far off to the left or right
@@ -202,7 +207,7 @@ class EyeCanSee(object):
 
                     self.detected_lane[key] = False
                     if self.debug:
-                        cv2.circle(self.img, (x, y), 5, (0, 0, 255), 2)
+                        cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
 
         return contour_metadata
 
@@ -216,7 +221,7 @@ class EyeCanSee(object):
             centered_coord[REGION] = (int(added_xy[0]/2), int(added_xy[1]/2))
 
             if self.debug:
-                cv2.circle(self.img, centered_coord[REGION], 5, (0, 255, 0), 3)
+                cv2.circle(self.img_debug, centered_coord[REGION], 5, (0, 255, 0), 3)
         return centered_coord
 
     # Gets the error of the centered coordinates
@@ -233,8 +238,8 @@ class EyeCanSee(object):
         self.normalize_img()
 
         # Filter out them colors
-        self.thres_blue = self.filter_smooth_thres(settings.BLUE_HSV_RANGE)
-        self.thres_yellow = self.filter_smooth_thres(settings.YELLOW_HSV_RANGE)
+        self.thres_blue = self.filter_smooth_thres(settings.BLUE_HSV_RANGE, 'blue')
+        self.thres_yellow = self.filter_smooth_thres(settings.YELLOW_HSV_RANGE, 'yellow')
 
         # Get contour meta data
         self.contour_metadata = self.get_contour_metadata()
@@ -246,9 +251,9 @@ class EyeCanSee(object):
         self.relative_error = self.get_errors()
 
         if self.debug:
-            cv2.imshow('img', self.img)
-            #cv2.imshow('img_roi', self.img_roi)
-            #cv2.imshow('img_hsv', self.img_roi_hsv)
+            cv2.imshow('img', self.img_debug)
+            cv2.imshow('img_roi', self.img_roi)
+            cv2.imshow('img_hsv', self.img_roi_hsv)
             cv2.imshow('thres_blue', self.thres_blue)
             cv2.imshow('thres_yellow', self.thres_yellow)
             key = cv2.waitKey(1) & 0xFF # Change 1 to 0 to pause between frames
@@ -273,6 +278,34 @@ class EyeCanSee(object):
 
         print('Time taken: {:.2f}'.format(fps.elapsed()))
         print('~ FPS : {:.2f}'.format(fps.fps()))
+
+    # Use this to save images to a location
+    def save_images(self, dirname='defisheye'):
+        import os
+        img_no = 1
+
+        # Makes the directory
+        if not os.path.exists('./' + dirname):
+            os.mkdir(dirname)
+
+        while True:
+            self.grab_frame()
+
+            if self.debug:
+                cv2.imshow('frame', self.img)
+
+            k = cv2.waitKey(1) & 0xFF
+
+            if k == ord('s'):
+                cv2.imwrite(os.path.join(dirname, 'fisheye_' + str(img_no) + '.jpg'), self.img)
+                img_no += 1
+
+            elif k == ord('q'):
+                break
+
+        cv2.destroyAllWindows()
+
+
 
     # Destructor
     def __del__(self):
