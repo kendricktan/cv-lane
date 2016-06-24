@@ -1,16 +1,19 @@
 from controllers import *
 import time
+import serial
 
-# If you wanna use Pin 20 e.g.
-# mainMotor = MotorController(GPIO_no=20)
-mainServo = ServoController()  # Using default Pin 12
+ser = serial.Serial('/dev/ttyUSB0', 9600)
 
-time.sleep(1)
-
-mainServo.turn_right(100)
+mainServo = ServoController(ser)
 
 time.sleep(1)
 
-mainServo.turn_left(100)
+mainServo.turn(150)
+
 time.sleep(1)
+
+mainServo.turn(50)
+
+time.sleep(1)
+
 mainServo.straighten()
