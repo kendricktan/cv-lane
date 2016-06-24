@@ -1,7 +1,7 @@
 # Camera parameters
-AWB_MODE = 'fluorescent'
+AWB_MODE = 'off'
 # AWB_MODE choices: 'off','auto','sunlight','cloudy','shade','tungsten','fluorescent','incandescent','flash','horizon'
-EXPOSURE_MODE = 'night'
+EXPOSURE_MODE = 'off'
 # Exposure mode choices: 'off','auto','night','nightpreview','backlight','spotlight','sports','snow','beach','verylong','fixedfps','antishake','fireworks'
 
 AWB_GAINS = (1.40, 1.90)
