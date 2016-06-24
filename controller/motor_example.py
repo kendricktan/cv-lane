@@ -1,25 +1,15 @@
 from controllers import *
 import time
-import serial
 
-# Our communication to arduino
-ser = serial.Serial('/dev/ttyUSB0', 9600)
-
-mainMotor = MotorController(ser)
+car_controller = Controller()
 
 # Motor values are in range 0 <= x <= 100
-mainMotor.run_speed(30)
+for i in range(0, 10):
+    car_controller.run_speed(10*i)
+    time.sleep(0.5)
 
-time.sleep(1)
+car_controller.toggle_dir()
+car_controller.run_speed(50)
+time.sleep(2)
 
-mainMotor.stop()
-
-time.sleep(1)
-
-mainMotor.toggle_dir()
-
-mainMotor.run_speed(30)
-
-time.sleep(1)
-
-mainMotor.stop()
+car_controller.stop()

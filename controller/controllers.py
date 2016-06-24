@@ -1,59 +1,50 @@
 import os
+import serial
 
-class MotorController():
-    # Speed for our motors
+class Controller():
+    def __init__(self, is_motor_forwards=True):
+        # Our serial to communicate with arduino
+        self.ser = serial.Serial('/dev/ttyUSB0', 9600)
+        self.is_motor_forwards = is_motor_forwards
+
+        self.run_speed(0)
+        self.ser.write('motor-dir,' + str(int(is_motor_forwards)) + '\n')
+
+    #### Motors ####
     # range = 0 <= x <= 100
     #
     # motor-dir: 0 = forward, 1 = backwards
-    def __init__(self, ser, min_threshold=0, max_threshold=100, is_backwards=False):
-        # Our serial to communicate with arduino
-        self.ser = ser
-
-        # Some parameters
-        self.min_threshold = min_threshold
-        self.max_threshold = max_threshold
-        self.is_backwards = is_backwards
-
     # Runs motors
     def run_speed(self, speed):
-        if speed <= self.min_threshold:
-            speed = self.min_threshold
-        elif speed >= self.max_threshold:
-            speed = self.max_threshold
+        if speed < 0:
+            speed = 0
+        elif speed > 100:
+            speed = 100
 
         self.ser.write('motor,' + str(speed) + '\n')
 
     # Toggles direction
     def toggle_dir(self):
-        self.is_backwards = not self.is_backwards
-        self.ser.write('motor-dir,' + str(int(self.is_backwards)) + '\n')
+        self.is_motor_forwards = not self.is_motor_forwards
+        self.ser.write('motor-dir,' + str(int(self.is_motor_forwards)) + '\n')
 
     # Stop
     def stop(self):
         self.ser.write('motor,0\n')
 
-
-class ServoController():
-    # Servo controlling steering
+    #####Servo ####
+    # Turns
     # range = 50 <= x <= 150
     # 50 = full right, 150 = full left
-    def __init__(self, ser, min_threshold=50, max_threshold=150):
-        self.ser = ser
-
-        # Some parameters
-        self.min_threshold = min_threshold
-        self.max_threshold = max_threshold
-
-    # Turns
     def turn(self, val):
-        if val <= self.min_threshold:
-            val = self.min_threshold
-        elif val >= self.max_threshold:
-            val = self.max_threshold
+        if val < 50:
+            val = 50
+        elif val > 150:
+            val = 150
 
         self.ser.write('steer,' + str(val) + '\n')
 
     # Straigthens servo
     def straighten(self):
-        self.ser.write('steer,50\n')
+        self.ser.write('steer,100\n')
 

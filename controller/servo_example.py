@@ -1,19 +1,12 @@
+
 from controllers import *
 import time
-import serial
 
-ser = serial.Serial('/dev/ttyUSB0', 9600)
+car_controller = Controller()
 
-mainServo = ServoController(ser)
+# Motor values are in range 0 <= x <= 100
+for i in range(0, 10):
+    car_controller.turn(50+(10*i))
+    time.sleep(0.5)
 
-time.sleep(1)
-
-mainServo.turn(150)
-
-time.sleep(1)
-
-mainServo.turn(50)
-
-time.sleep(1)
-
-mainServo.straighten()
+car_controller.straighten()
