@@ -12,6 +12,7 @@ import sys
 import threading
 import ai.aisettings as aisettings
 import cv.cvsettings as cvsettings
+import controller.controllersettings as ctlsettings
 
 print("Initialising...")
 
@@ -32,7 +33,13 @@ kalman_filter = KalmanFilter(aisettings.VAR, aisettings.EST_VAR)
 previous_values = 0.0
 
 # PID for each region (if we do decide to add any)
-pid = PID(p=aisettings.P_, i=aisettings.I_, d=aisettings.D_)
+pid = PID(
+    p=aisettings.P_,
+    i=aisettings.I_,
+    d=aisettings.D_,
+    min_threshold=ctlsettings.PID_MIN_VAL,
+    max_threshold=ctlsettings.PID_MAX_VAL
+)
 
 # Controllers
 car_controller = Controller()
@@ -42,6 +49,7 @@ car_controller.straighten()
 # Wait for the switch to be "armed" before starting
 # (and blink the LED rapidly so we know)
 print("Initialisation complete.")
+
 if (GPIO.input(11) == 1):
     print("Start the CV by turning the arming switch on.")
 
@@ -87,7 +95,7 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Negative total_pid = need to turn left
     # Positive total_pid = need to turn right
     # Try to keep pid 0
-    steer_val = map_func(abs(total_pid), 0, 100.0, 0.0, 50.0)
+    steer_val = map_func(total_pid, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, 0.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
     if total_pid > 0:
         car_controller.turn(abs(steer_val), left=True)
 
