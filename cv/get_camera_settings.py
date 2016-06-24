@@ -4,15 +4,15 @@ import picamera
 import picamera.array
 import cv2
 import numpy as np
-import settings
+import cvsettings
 
 # Create the in-memory stream
 stream = io.BytesIO()
 
 with picamera.PiCamera() as camera:
-    camera.resolution = (1280, 720)
-    camera.awb_mode = 'auto' 
-    camera.exposure_mode = 'auto' 
+    camera.resolution = (cvsettings.CAMERA_WIDTH, cvsettings.CAMERA_HEIGHT)
+    camera.awb_mode = 'auto'
+    camera.exposure_mode = 'auto'
 
     time.sleep(2)
 

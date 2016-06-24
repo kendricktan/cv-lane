@@ -21,14 +21,6 @@ GPIO.setup(11, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Arming pin is input
 GPIO.setup(40, GPIO.OUT)  # LED pin is output
 GPIO.output(40, 1)  # Set LED pin to "high" or on
 
-output = commands.getoutput('ps -A')
-
-if 'servod' in output:
-    print("Servo Blaster process found.")
-else:
-    print("Servo Blaster process not found. Starting it now.")
-    os.system("echo terminator | sudo service servoblaster start")
-
 # Our class instances
 camera = EyeCanSee()
 
@@ -37,17 +29,15 @@ kalman_filter = KalmanFilter(aisettings.VAR, aisettings.EST_VAR)
 
 # previous values (in case can't detect line)
 # we'll go and continue previous location
-previous_value_ = 0.0
+previous_values = 0.0
 
 # PID for each region (if we do decide to add any)
 pid = PID(p=aisettings.P_, i=aisettings.I_, d=aisettings.D_)
 
 # Controllers
-motor = MotorController()  # values: -100 <= x <= 100
-steering = ServoController()  # values: 0 <= x <= 100
-
-motor.stop()
-steering.straighten()
+car_controller = Controller()
+car_controller.stop()
+car_controller.straighten()
 
 # Wait for the switch to be "armed" before starting
 # (and blink the LED rapidly so we know)
@@ -67,34 +57,14 @@ for i in range(0, 5):
     GPIO.output(40, 0)
     time.sleep(0.25)
 
-def status():
-    global t
-    sys.stdout.write('\r')
-    sys.stdout.write(" ")
-    sys.stdout.flush()
-    t = threading.Timer(1, status).start()
-
-status()  # Start the first "thread" for blinking dot
 time.sleep(0.5)  # Leave a 0.5 second delay so it alternates (ie blinks)
 
-
-def status2():
-    global t2
-    sys.stdout.write('\r')
-    sys.stdout.write(".")
-    sys.stdout.flush()
-    t2 = threading.Timer(1, status2).start()
-
-
-status2()  # start the second "thread" for blinking dot
-
-# Start moving forward
-motor.run_speed(35)
+print('Starting autonomous control now...')
 
 for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     while (GPIO.input(11) == 1):
-        motor.stop()  # Reset throttle
-        steering.straighten()  # Reset steering
+        car_controller.stop()  # Reset throttle
+        car_controller.straighten()  # Reset steering
 
     # Trys and get our lane
     camera.where_lane_be()
@@ -117,25 +87,24 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Negative total_pid = need to turn left
     # Positive total_pid = need to turn right
     # Try to keep pid 0
-    if total_pid < 0:
-        if total_pid < -100:
-            total_pid = -100
-        steering.turn_left(abs(total_pid))
+    steer_val = map_func(abs(total_pid), 0, 100.0, 0.0, 50.0)
+    if total_pid > 0:
+        car_controller.turn(abs(steer_val), left=True)
 
-    elif total_pid > 0:
-        if total_pid > 100:
-            total_pid = 100
-        steering.turn_right(abs(total_pid))
+    elif total_pid < 0:
+        car_controller.turn(abs(steer_val), left=False)
 
     # Motors slow down around bends
-    motor_speed = map_func(abs(total_pid), 0, 100, 20, 35)
-    motor.run_speed(motor_speed)
+    #motor_speed = map_func(abs(total_pid), -3.0, 3.0, 60.0, 75.0)
+    car_controller.run_speed(50)
+    #print(steer_val)
 
-    time.sleep(0.01)
+
+    time.sleep(0.05)
 
 # Turn everything off now that we're done and exit the program
-steering.straighten()
-motor.stop()
+car_controller.straighten()
+car_controller.stop()
 
 # LED
 GPIO.output(40, 0)

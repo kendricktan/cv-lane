@@ -1,7 +1,7 @@
 # Camera parameters
-AWB_MODE = 'off'
+AWB_MODE = 'auto'
 # AWB_MODE choices: 'off','auto','sunlight','cloudy','shade','tungsten','fluorescent','incandescent','flash','horizon'
-EXPOSURE_MODE = 'off'
+EXPOSURE_MODE = 'auto'
 # Exposure mode choices: 'off','auto','night','nightpreview','backlight','spotlight','sports','snow','beach','verylong','fixedfps','antishake','fireworks'
 
 AWB_GAINS = (1.40, 1.90)
@@ -18,11 +18,11 @@ BRIGHTNESS = 50
 PROP_FORMAT = 1
 
 # Thresholding parameters
-BLUE_HSV_RANGE = [([0, 255, 10], [20, 255, 80])]  # [([30, 30, 60], [80, 80, 90])]
-YELLOW_HSV_RANGE = [([10, 220, 140], [20, 255, 190])]  # [([25, 230, 230], [50, 255, 255])]
-HEIGHT_PADDING = int(CAMERA_HEIGHT / 2)
+BLUE_HSV_RANGE = [([35, 100, 60], [55, 180, 120])]  # [([30, 30, 60], [80, 80, 90])]
+YELLOW_HSV_RANGE = [([25, 140, 190], [50, 220, 230])]  # [([25, 230, 230], [50, 255, 255])]
+HEIGHT_PADDING = int(CAMERA_HEIGHT / 1.5)
 WIDTH_PADDING = 0
 
 REGIONS_KEYS = ['middle']  # ['top', 'middle', 'bottom']
 
-FRAMES = 65  # How many frames to do CV for (runs at ~37 FPS on pi 2)
+FRAMES = 65 # How many frames to do CV for (runs at ~37 FPS on pi 2)

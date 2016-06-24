@@ -2,36 +2,36 @@ import time
 
 import cv2
 import numpy as np
-import settings
+import cvsettings
 from imutils.video import FPS
 from imutils.video import WebcamVideoStream
 from imutils.video.pivideostream import PiVideoStream
 
 
 class EyeCanSee(object):
-    def __init__(self, center=int(settings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False):
+    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False):
         # Our video stream
         # If its not a usb webcam then get pi camera
         if not is_usb_webcam:
-            self.vs = PiVideoStream(resolution=(settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT))
-            # Camera settings
-            self.vs.camera.shutter_speed = settings.SHUTTER
-            self.vs.camera.exposure_mode = settings.EXPOSURE_MODE
-            self.vs.camera.exposure_compensation = settings.EXPOSURE_COMPENSATION
-            self.vs.camera.awb_gains = settings.AWB_GAINS
-            self.vs.camera.awb_mode = settings.AWB_MODE
-            self.vs.camera.saturation = settings.SATURATION
-            self.vs.camera.rotation = settings.ROTATION
-            self.vs.camera.video_stabilization = settings.VIDEO_STABALIZATION
-            self.vs.camera.ISO = settings.ISO
-            self.vs.camera.brightness = settings.BRIGHTNESS
-            self.vs.camera.contrast = settings.CONTRAST
+            self.vs = PiVideoStream(resolution=(cvsettings.CAMERA_WIDTH, cvsettings.CAMERA_HEIGHT))
+            # Camera cvsettings
+            self.vs.camera.shutter_speed = cvsettings.SHUTTER
+            self.vs.camera.exposure_mode = cvsettings.EXPOSURE_MODE
+            self.vs.camera.exposure_compensation = cvsettings.EXPOSURE_COMPENSATION
+            self.vs.camera.awb_gains = cvsettings.AWB_GAINS
+            self.vs.camera.awb_mode = cvsettings.AWB_MODE
+            self.vs.camera.saturation = cvsettings.SATURATION
+            self.vs.camera.rotation = cvsettings.ROTATION
+            self.vs.camera.video_stabilization = cvsettings.VIDEO_STABALIZATION
+            self.vs.camera.ISO = cvsettings.ISO
+            self.vs.camera.brightness = cvsettings.BRIGHTNESS
+            self.vs.camera.contrast = cvsettings.CONTRAST
 
         # Else get the usb camera
         else:
             self.vs = WebcamVideoStream(src=0)
-            self.vs.stream.set(cv2.CAP_PROP_FRAME_WIDTH, settings.CAMERA_WIDTH)
-            self.vs.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, settings.CAMERA_HEIGHT)
+            self.vs.stream.set(cv2.CAP_PROP_FRAME_WIDTH, cvsettings.CAMERA_WIDTH)
+            self.vs.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, cvsettings.CAMERA_HEIGHT)
 
         # Has camera started
         self.camera_started = False
@@ -94,7 +94,7 @@ class EyeCanSee(object):
     # Normalizes our image
     def normalize_img(self):
         # Crop img and convert to hsv
-        self.img_roi = np.copy(self.img[settings.HEIGHT_PADDING:int(settings.HEIGHT_PADDING + 20), :])
+        self.img_roi = np.copy(self.img[cvsettings.HEIGHT_PADDING:int(cvsettings.HEIGHT_PADDING + 20), :])
         self.img_roi_hsv = cv2.cvtColor(self.img_roi, cv2.COLOR_BGR2HSV).copy()
 
         # Get our ROI's shape
@@ -113,12 +113,12 @@ class EyeCanSee(object):
 
         # Morphological transformation
         kernel = np.ones((2, 2), np.uint8)
-        smoothen = cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
+        smoothen = blurred #cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
 
         if self.debug:
             cv2.imshow('mask ' + color, mask)
             cv2.imshow('blurred ' + color, blurred)
-            cv2.imshow('smoothen ' + color, smoothen)
+            #cv2.imshow('smoothen ' + color, smoothen)
 
         return smoothen
 
@@ -129,6 +129,7 @@ class EyeCanSee(object):
         contour_metadata = {}
         for cur_img in [self.thres_yellow, self.thres_blue]:
             key = ''
+
             # Blue is left lane, Yellow is right lane
             if cur_img is self.thres_yellow:
                 key = 'right'
@@ -149,25 +150,35 @@ class EyeCanSee(object):
                 x, y, w, h = cv2.boundingRect(cnt)
 
                 # Normalize it to the original picture
-                x += int(settings.WIDTH_PADDING + w / 2)
-                y += int(settings.HEIGHT_PADDING + h / 2)
+                x += int(cvsettings.WIDTH_PADDING + w / 2)
+                y += int(cvsettings.HEIGHT_PADDING + h / 2)
 
                 contour_metadata[key] = (x, y)
 
                 self.detected_lane = True
 
                 if self.debug:
-                    cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
+                    if 'left' in key:
+                        cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
+                    else:
+                        cv2.circle(self.img_debug, (x, y), 5, (0, 255, 255), 2)
 
             # If it throws an error then it doesn't have a ROI
             # Means we're too far off to the left or right
             except:
+                key = ''
+
                 # Blue is left lane, Yellow is right lane
+                if cur_img is self.thres_yellow:
+                    key = 'right'
+                else:
+                    key = 'left'
 
-                x = int(settings.WIDTH_PADDING)
-                y = int(cur_height / 2) + int(settings.HEIGHT_PADDING + cur_height / 2)
+                # Blue is left lane, Yellow is right lane
+                x = int(cvsettings.WIDTH_PADDING)
+                y = int(cur_height / 2) + int(cvsettings.HEIGHT_PADDING + cur_height / 2)
 
-                if 'yellow' in key:
+                if 'right' in key:
                     x += int(cur_width)
 
                 contour_metadata[key] = (x, y)
@@ -175,7 +186,10 @@ class EyeCanSee(object):
                 self.detected_lane = False
 
                 if self.debug:
-                    cv2.circle(self.img_debug, (x, y), 5, (0, 0, 255), 2)
+                    if 'left' in key:
+                        cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
+                    else:
+                        cv2.circle(self.img_debug, (x, y), 5, (0, 255, 255), 2)
 
         return contour_metadata
 
@@ -203,8 +217,8 @@ class EyeCanSee(object):
         self.normalize_img()
 
         # Filter out them colors
-        self.thres_blue = self.filter_smooth_thres(settings.BLUE_HSV_RANGE, 'blue')
-        self.thres_yellow = self.filter_smooth_thres(settings.YELLOW_HSV_RANGE, 'yellow')
+        self.thres_blue = self.filter_smooth_thres(cvsettings.BLUE_HSV_RANGE, 'blue')
+        self.thres_yellow = self.filter_smooth_thres(cvsettings.YELLOW_HSV_RANGE, 'yellow')
 
         # Get contour meta data
         self.contour_metadata = self.get_contour_metadata()
@@ -218,7 +232,7 @@ class EyeCanSee(object):
         if self.debug:
             cv2.imshow('img', self.img_debug)
             cv2.imshow('img_roi', self.img_roi)
-            cv2.imshow('img_hsv', self.img_roi_hsv)
+            #cv2.imshow('img_hsv', self.img_roi_hsv)
             cv2.imshow('thres_blue', self.thres_blue)
             cv2.imshow('thres_yellow', self.thres_yellow)
             key = cv2.waitKey(1) & 0xFF  # Change 1 to 0 to pause between frames
