@@ -39,8 +39,8 @@ pid = PID(
     p=aisettings.P_,
     i=aisettings.I_,
     d=aisettings.D_,
-    min_threshold=aisetting.PID_MIN_VAL,
-    max_threshold=aisetting.PID_MAX_VAL
+    min_threshold=aisettings.PID_MIN_VAL,
+    max_threshold=aisettings.PID_MAX_VAL
 )
 
 # Controllers
@@ -58,12 +58,8 @@ if (GPIO.input(11) == 1):
 while (GPIO.input(11) == 1):
     blink()
 
-for i in range(0, 5):
-    blink()
-
-time.sleep(0.5)  # Leave a 0.5 second delay so it alternates (ie blinks)
-
-print('Starting autonomous control now...')
+raw_input("Please press any key to start driving *immediately*")
+print("Starting autonomous control now!")
 
 for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     while (GPIO.input(11) == 1):
