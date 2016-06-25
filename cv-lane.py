@@ -86,8 +86,8 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
         filtered_value = kalman_filter.get_latest_estimated_measurement()
 
         # Add pid to previous value and total_pid value
-        previous_values = filtered_value
         total_pid += pid.update(filtered_value)
+        previous_values = total_pid
 
     else:
         total_pid += previous_values
@@ -107,7 +107,6 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Motors slow down around bends
     #motor_speed = map_func(abs(total_pid), -3.0, 3.0, 60.0, 75.0)
     car_controller.run_speed(40)
-
 
     time.sleep(0.05)
 

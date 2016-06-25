@@ -61,7 +61,13 @@ class EyeCanSee(object):
         cv2.namedWindow('hsv_extractor')
         while True:
             self.grab_frame()
-            cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING + 20), (0, 250, 0), 2)
+
+            # Bottom ROI
+            cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_BOTTOM-2), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_BOTTOM + cvsettings.IMG_ROI_HEIGHT + 2), (0, 250, 0), 2)
+
+            # Top ROI
+            cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP-2), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP + cvsettings.IMG_ROI_HEIGHT + 2), (0, 250, 0), 2)
+
             self.hsv_frame = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
 
             # Mouse handler
@@ -95,11 +101,15 @@ class EyeCanSee(object):
     # Normalizes our image
     def normalize_img(self):
         # Crop img and convert to hsv
-        self.img_roi = np.copy(self.img[cvsettings.HEIGHT_PADDING:int(cvsettings.HEIGHT_PADDING + 20), :])
-        self.img_roi_hsv = cv2.cvtColor(self.img_roi, cv2.COLOR_BGR2HSV).copy()
+        self.img_roi_bottom = np.copy(self.img[cvsettings.HEIGHT_PADDING_BOTTOM:int(cvsettings.HEIGHT_PADDING_BOTTOM + cvsettings.IMG_ROI_HEIGHT), :])
+        self.img_roi_top = np.copy(self.img[cvsettings.HEIGHT_PADDING_TOP:int(cvsettings.HEIGHT_PADDING_TOP + cvsettings.IMG_ROI_HEIGHT), :])
+
+        self.img_roi_bottom_hsv = cv2.cvtColor(self.img_roi_bottom, cv2.COLOR_BGR2HSV).copy()
+        self.img_roi_top_hsv = cv2.cvtColor(self.img_roi_top, cv2.COLOR_BGR2HSV).copy()
 
         # Get our ROI's shape
-        self.roi_height, self.roi_width, self.roi_channels = self.img_roi.shape
+        # Doesn't matter because both of them are the same shape
+        self.roi_height, self.roi_width, self.roi_channels = self.img_roi_bottom.shape
 
     # Smooth image and convert to bianry image (threshold)
     # Filter out colors that are not within the RANGE value
@@ -108,34 +118,43 @@ class EyeCanSee(object):
             lower = np.array(lower, dtype='uint8')
             upper = np.array(upper, dtype='uint8')
 
-            mask = cv2.inRange(self.img_roi_hsv, lower, upper)
+            mask_bottom = cv2.inRange(self.img_roi_bottom_hsv, lower, upper)
+            mask_top = cv2.inRange(self.img_roi_top_hsv, lower, upper)
 
-        blurred = cv2.medianBlur(mask, 5)
+        blurred_bottom = cv2.medianBlur(mask_bottom, 5)
+        blurred_top = cv2.medianBlur(mask_top, 5)
 
         # Morphological transformation
         kernel = np.ones((2, 2), np.uint8)
-        smoothen = blurred #cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
+        smoothen_bottom = blurred_bottom #cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
+        smoothen_top = blurred_top  # cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
 
         if self.debug:
-            cv2.imshow('mask ' + color, mask)
-            cv2.imshow('blurred ' + color, blurred)
-            #cv2.imshow('smoothen ' + color, smoothen)
+            cv2.imshow('mask bottom ' + color, mask_bottom)
+            cv2.imshow('blurred bottom' + color, blurred_bottom)
 
-        return smoothen
+            cv2.imshow('mask top ' + color, mask_top)
+            cv2.imshow('blurred top' + color, blurred_top)
+
+        return smoothen_bottom, smoothen_top
 
     # Gets metadata from our contours
     def get_contour_metadata(self):
 
         # Metadata (x,y,w,h)for our ROI
         contour_metadata = {}
-        for cur_img in [self.thres_yellow, self.thres_blue]:
+        for cur_img in [self.thres_yellow_bottom, self.thres_yellow_top, self.thres_blue_bottom, self.thres_blue_top]:
             key = ''
 
             # Blue is left lane, Yellow is right lane
-            if cur_img is self.thres_yellow:
-                key = 'right'
-            else:
-                key = 'left'
+            if cur_img is self.thres_yellow_bottom:
+                key = 'right_bottom'
+            elif cur_img is self.thres_yellow_top:
+                key = 'right_top'
+            elif cur_img is self.thres_blue_bottom:
+                key = 'left_bottom'
+            elif cur_img is self.thres_blue_top:
+                key = 'left_top'
 
             _, contours, hierarchy = cv2.findContours(cur_img.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -152,13 +171,14 @@ class EyeCanSee(object):
 
                 # Normalize it to the original picture
                 x += int(cvsettings.WIDTH_PADDING + w / 2)
-                y += int(cvsettings.HEIGHT_PADDING + h / 2)
+                y += int(cvsettings.HEIGHT_PADDING_BOTTOM + h / 2)
 
                 contour_metadata[key] = (x, y)
 
                 self.detected_lane = True
 
                 if self.debug:
+                    # Draw blue circle to blue line, and so on
                     if 'left' in key:
                         cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
                     else:
@@ -167,17 +187,10 @@ class EyeCanSee(object):
             # If it throws an error then it doesn't have a ROI
             # Means we're too far off to the left or right
             except:
-                key = ''
-
-                # Blue is left lane, Yellow is right lane
-                if cur_img is self.thres_yellow:
-                    key = 'right'
-                else:
-                    key = 'left'
 
                 # Blue is left lane, Yellow is right lane
                 x = int(cvsettings.WIDTH_PADDING)
-                y = int(cur_height / 2) + int(cvsettings.HEIGHT_PADDING + cur_height / 2)
+                y = int(cur_height / 2) + int(cvsettings.HEIGHT_PADDING_BOTTOM + cur_height / 2)
 
                 if 'right' in key:
                     x += int(cur_width)
@@ -187,6 +200,7 @@ class EyeCanSee(object):
                 self.detected_lane = False
 
                 if self.debug:
+                    # Draw blue circle to blue line, and so on
                     if 'left' in key:
                         cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
                     else:
@@ -196,20 +210,30 @@ class EyeCanSee(object):
 
     # Gets the centered coord of the detected lines
     def get_centered_coord(self):
-        centered_coord = None
-        left_xy = self.contour_metadata['left']
-        right_xy = self.contour_metadata['right']
-        added_xy = (left_xy[0] + right_xy[0], left_xy[1] + right_xy[1])
-        centered_coord = (int(added_xy[0] / 2), int(added_xy[1] / 2))
+        bottom_centered_coord = None
+        top_centered_coord = None
+
+        left_xy_bottom = self.contour_metadata['left_bottom']
+        right_xy_bottom = self.contour_metadata['right_bottom']
+
+        left_xy_top = self.contour_metadata['left_top']
+        right_xy_top = self.contour_metadata['right_top']
+
+        bottom_xy = (left_xy_bottom[0] + right_xy_bottom[0], left_xy_bottom[1] + right_xy_bottom[1])
+        bottom_centered_coord = (int(bottom_xy[0] / 2), int(bottom_xy[1] / 2))
+
+        top_xy = (left_xy_top[0] + right_xy_top[0], left_xy_top[1] + right_xy_top[1])
+        top_centered_coord = (int(top_xy[0] / 2), int(top_xy[1] / 2))
 
         if self.debug:
-            cv2.circle(self.img_debug, centered_coord, 5, (0, 255, 0), 3)
+            cv2.circle(self.img_debug, bottom_centered_coord, 5, (0, 255, 0), 3)
+            cv2.circle(self.img_debug, top_centered_coord, 5, (0, 255, 0), 3)
 
-        return centered_coord
+        return bottom_centered_coord, top_centered_coord
 
     # Gets the error of the centered coordinates (x)
     def get_errors(self):
-        return self.center_coord[0] - self.center
+        return self.center_coord_top[0] - self.center_coord_bottom[0]
 
     # Where are we relative to our lane
     def where_lane_be(self):
@@ -218,24 +242,27 @@ class EyeCanSee(object):
         self.normalize_img()
 
         # Filter out them colors
-        self.thres_blue = self.filter_smooth_thres(cvsettings.BLUE_HSV_RANGE, 'blue')
-        self.thres_yellow = self.filter_smooth_thres(cvsettings.YELLOW_HSV_RANGE, 'yellow')
+        self.thres_blue_bottom, self.thres_blue_top = self.filter_smooth_thres(cvsettings.BLUE_HSV_RANGE, 'blue')
+        self.thres_yellow_bottom, self.thres_yellow_top = self.filter_smooth_thres(cvsettings.YELLOW_HSV_RANGE, 'yellow')
 
         # Get contour meta data
         self.contour_metadata = self.get_contour_metadata()
 
-        # Find center between lanes (we wanna try to be in there)
-        self.center_coord = self.get_centered_coord()
+        # Find the center of the lanes (bottom and top) [we wanna be in between]
+        self.center_coord_bottom, self.center_coord_top = self.get_centered_coord()
 
-        # Gets relative error
+        # Gets relative error between top center and bottom center
         self.relative_error = self.get_errors()
 
         if self.debug:
             cv2.imshow('img', self.img_debug)
-            cv2.imshow('img_roi', self.img_roi)
+            #cv2.imshow('img_roi top', self.img_roi_top)
+            #cv2.imshow('img_roi bottom', self.img_roi_bottom)
             #cv2.imshow('img_hsv', self.img_roi_hsv)
-            cv2.imshow('thres_blue', self.thres_blue)
-            cv2.imshow('thres_yellow', self.thres_yellow)
+            cv2.imshow('thres_blue_bottom', self.thres_blue_bottom)
+            cv2.imshow('thres_blue_top', self.thres_blue_top)
+            cv2.imshow('thres_yellow_bottom', self.thres_yellow_bottom)
+            cv2.imshow('thres_yellow_top', self.thres_yellow_top)
             key = cv2.waitKey(1) & 0xFF  # Change 1 to 0 to pause between frames
 
     # Use this to calculate fps
