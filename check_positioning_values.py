@@ -37,35 +37,33 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Trys and get our lane
     camera.where_lane_be()
 
-    calibrated_value = 0
-    filtered_value = 0
+    # Filters out irregular values
+    kalman_filter.input_latest_noisy_measurement(camera.relative_error)
+    filtered_value = kalman_filter.get_latest_estimated_measurement()
 
-    # If it detects lane, then proceed, otherwise use previous region
-    if camera.detected_lane:
-        # Filters out irregular values
-        kalman_filter.input_latest_noisy_measurement(camera.relative_error)
-        filtered_value = kalman_filter.get_latest_estimated_measurement()
+    # Add pid to previous value and total_pid value
+    calibrated_value = pid.update(filtered_value)
 
-        # Add pid to previous value and calibrated_value value
-        previous_values = filtered_value
-        calibrated_value += pid.update(filtered_value)
-
-    else:
-        calibrated_value += previous_values
-
-    # Negative calibrated_value = need to turn left
-    # Positive calibrated_value = need to turn right
+    # Negative total_pid = need to turn left
+    # Positive total_pid = need to turn right
     # Try to keep pid 0
-    steer_val = map_func(calibrated_value, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, -50.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
+
+    if filtered_value < 0:
+        print('Left: %s' % calibrated_value)
+        car_controller.turn(calibrated_value), left=True)
+
+    elif filtered_value > 0:
+        print('Right: %s' % calibrated_value)    
+
     print('Is lane detected: %s' % str(camera.detected_lane))
     print('Camera relative error: %s'% camera.relative_error)
     print('Filtered value: %s'% filtered_value)
-    print('Calibrated value: %s' % calibrated_value)
+
     if filtered_value > 0:
-        print('Left: %s' % steer_val)
+        print('Left: %s' % calibrated_value)
 
     elif filtered_value < 0:
-        print('Right: %s' % steer_val)
+        print('Right: %s' % calibrated_value)
 
     print('----')
 

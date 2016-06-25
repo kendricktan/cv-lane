@@ -7,3 +7,6 @@ EST_VAR = STD_DEV ** 2
 P_ = 0.01
 I_ = 0.0
 D_ = 0.0
+
+PID_MIN_VAL = -50
+PID_MAX_VAL = 50

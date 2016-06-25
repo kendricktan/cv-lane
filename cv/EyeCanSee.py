@@ -242,12 +242,13 @@ class EyeCanSee(object):
         return bottom_centered_coord, top_centered_coord
 
     # Gets the error of the centered coordinates (x)
+    # Also normlizes their values
     def get_errors(self):
-        top_error = self.center_coord_top[0] - self.center
-        bottom_error = self.center_coord_bottom[0] - self.center
-        relative_error = self.center_coord_top[0] - self.center_coord_bottom[0]
+        top_error = (self.center_coord_top[0] - self.center)/(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
+        bottom_error = (self.center_coord_bottom[0] - self.center)/(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
+        relative_error = (self.center_coord_top[0] - self.center_coord_bottom[0])/(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
 
-        return 0.5*top_error + relative_error + bottom_error
+        return (top_error + relative_error + bottom_error)/3
 
     # Where are we relative to our lane
     def where_lane_be(self):

@@ -1,2 +1,0 @@
-PID_MIN_VAL = -10
-PID_MAX_VAL = 10
