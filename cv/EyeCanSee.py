@@ -129,12 +129,14 @@ class EyeCanSee(object):
         smoothen_bottom = blurred_bottom #cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
         smoothen_top = blurred_top  # cv2.morphologyEx(blurred, cv2.MORPH_OPEN, kernel, iterations=5)
 
+        """
         if self.debug:
             cv2.imshow('mask bottom ' + color, mask_bottom)
             cv2.imshow('blurred bottom' + color, blurred_bottom)
 
             cv2.imshow('mask top ' + color, mask_top)
             cv2.imshow('blurred top' + color, blurred_top)
+        """
 
         return smoothen_bottom, smoothen_top
 
@@ -171,7 +173,11 @@ class EyeCanSee(object):
 
                 # Normalize it to the original picture
                 x += int(cvsettings.WIDTH_PADDING + w / 2)
-                y += int(cvsettings.HEIGHT_PADDING_BOTTOM + h / 2)
+
+                if 'top' in key:
+                    y += int(cvsettings.HEIGHT_PADDING_TOP +h /2)
+                else:
+                    y += int(cvsettings.HEIGHT_PADDING_BOTTOM + h / 2)
 
                 contour_metadata[key] = (x, y)
 
@@ -189,11 +195,15 @@ class EyeCanSee(object):
             except:
 
                 # Blue is left lane, Yellow is right lane
-                x = int(cvsettings.WIDTH_PADDING)
-                y = int(cur_height / 2) + int(cvsettings.HEIGHT_PADDING_BOTTOM + cur_height / 2)
+                x = int(cvsettings.WIDTH_PADDING) - cvsettings.CAMERA_WIDTH
+
+                if 'bottom' in key:
+                    y = int(cur_height / 2) + int(cvsettings.HEIGHT_PADDING_BOTTOM + cur_height / 2)
+                else:
+                    y = int(cur_height / 2) + int(cvsettings.HEIGHT_PADDING_TOP + cur_height / 2)
 
                 if 'right' in key:
-                    x += int(cur_width)
+                    x = int(cur_width)*2
 
                 contour_metadata[key] = (x, y)
 
@@ -233,7 +243,11 @@ class EyeCanSee(object):
 
     # Gets the error of the centered coordinates (x)
     def get_errors(self):
-        return self.center_coord_top[0] - self.center_coord_bottom[0]
+        top_error = self.center_coord_top[0] - self.center
+        bottom_error = self.center_coord_bottom[0] - self.center
+        relative_error = self.center_coord_top[0] - self.center_coord_bottom[0]
+
+        return 0.5*top_error + relative_error + bottom_error
 
     # Where are we relative to our lane
     def where_lane_be(self):
@@ -263,7 +277,7 @@ class EyeCanSee(object):
             cv2.imshow('thres_blue_top', self.thres_blue_top)
             cv2.imshow('thres_yellow_bottom', self.thres_yellow_bottom)
             cv2.imshow('thres_yellow_top', self.thres_yellow_top)
-            key = cv2.waitKey(1) & 0xFF  # Change 1 to 0 to pause between frames
+            key = cv2.waitKey(0) & 0xFF  # Change 1 to 0 to pause between frames
 
     # Use this to calculate fps
     def calculate_fps(self, frames_no=100):

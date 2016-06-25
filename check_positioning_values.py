@@ -37,7 +37,7 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Trys and get our lane
     camera.where_lane_be()
 
-    total_pid = 0
+    calibrated_value = 0
     filtered_value = 0
 
     # If it detects lane, then proceed, otherwise use previous region
@@ -46,24 +46,25 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
         kalman_filter.input_latest_noisy_measurement(camera.relative_error)
         filtered_value = kalman_filter.get_latest_estimated_measurement()
 
-        # Add pid to previous value and total_pid value
+        # Add pid to previous value and calibrated_value value
         previous_values = filtered_value
-        total_pid += pid.update(filtered_value)
+        calibrated_value += pid.update(filtered_value)
 
     else:
-        total_pid += previous_values
+        calibrated_value += previous_values
 
-    # Negative total_pid = need to turn left
-    # Positive total_pid = need to turn right
+    # Negative calibrated_value = need to turn left
+    # Positive calibrated_value = need to turn right
     # Try to keep pid 0
-    steer_val = map_func(total_pid, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, 0.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
+    steer_val = map_func(calibrated_value, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, -50.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
+    print('Is lane detected: %s' % str(camera.detected_lane))
     print('Camera relative error: %s'% camera.relative_error)
     print('Filtered value: %s'% filtered_value)
-    print('Total pid: %s' % total_pid)
-    if total_pid > 0:
+    print('Calibrated value: %s' % calibrated_value)
+    if filtered_value > 0:
         print('Left: %s' % steer_val)
 
-    elif total_pid < 0:
+    elif filtered_value < 0:
         print('Right: %s' % steer_val)
 
     print('----')

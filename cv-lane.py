@@ -30,7 +30,8 @@ kalman_filter = KalmanFilter(aisettings.VAR, aisettings.EST_VAR)
 
 # previous values (in case can't detect line)
 # we'll go and continue previous location
-previous_values = 0.0
+calibrated_value = 0.0
+
 
 # PID for each region (if we do decide to add any)
 pid = PID(
@@ -77,38 +78,31 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Trys and get our lane
     camera.where_lane_be()
 
-    calibrated_value = 0
+    # Filters out irregular values
+    kalman_filter.input_latest_noisy_measurement(camera.relative_error)
+    filtered_value = kalman_filter.get_latest_estimated_measurement()
 
-    # If it detects lane, then proceed, otherwise use previous region
-    if camera.detected_lane:
-        # Filters out irregular values
-        kalman_filter.input_latest_noisy_measurement(camera.relative_error)
-        filtered_value = kalman_filter.get_latest_estimated_measurement()
-
-        # Add pid to previous value and total_pid value
-        calibrated_value += pid.update(filtered_value)
-        previous_values = calibrated_value
-
-    else:
-        calibrated_value += previous_values
+    # Add pid to previous value and total_pid value
+    calibrated_value += pid.update(filtered_value)
 
     # Negative total_pid = need to turn left
     # Positive total_pid = need to turn right
     # Try to keep pid 0
-    steer_val = map_func(calibrated_value, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, 0.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
-    if calibrated_value < 0:
+    steer_val = map_func(calibrated_value, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, -2.0, 2.0) # 50 because 50 <= x <= 150 (100 is neutral)
+
+    if filtered_value < 0:
         #print('Left: %s' % total_pid)
         car_controller.turn(abs(steer_val), left=True)
 
-    elif calibrated_value > 0:
+    elif filtered_value > 0:
         #print('Right: %s' % total_pid)
         car_controller.turn(abs(steer_val), right=True)
 
     # Motors slow down around bends
     #motor_speed = map_func(abs(total_pid), -3.0, 3.0, 60.0, 75.0)
-    car_controller.run_speed(40)
+    car_controller.run_speed(35)
 
-    time.sleep(0.05)
+    time.sleep(0.03)
 
 # Turn everything off now that we're done and exit the program
 car_controller.straighten()

@@ -1,9 +1,9 @@
 # Kalman filter | KalmanFilter(VAR, EST_VAR)
-STD_DEV =2.5
-VAR = 10
+STD_DEV = 0.5
+VAR = 15
 EST_VAR = STD_DEV ** 2
 
 # PID
-P_ = 0.025
-I_ = 0.027
-D_ = 0.042
+P_ = 0.01
+I_ = 0.0
+D_ = 0.0
