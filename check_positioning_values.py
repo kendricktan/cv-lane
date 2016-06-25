@@ -66,4 +66,6 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     elif total_pid < 0:
         print('Right: %s' % steer_val)
 
+    print('----')
+
     time.sleep(0.05)

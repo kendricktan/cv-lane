@@ -77,7 +77,7 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Trys and get our lane
     camera.where_lane_be()
 
-    total_pid = 0
+    calibrated_value = 0
 
     # If it detects lane, then proceed, otherwise use previous region
     if camera.detected_lane:
@@ -86,23 +86,23 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
         filtered_value = kalman_filter.get_latest_estimated_measurement()
 
         # Add pid to previous value and total_pid value
-        total_pid += pid.update(filtered_value)
-        previous_values = total_pid
+        calibrated_value += pid.update(filtered_value)
+        previous_values = calibrated_value
 
     else:
-        total_pid += previous_values
+        calibrated_value += previous_values
 
     # Negative total_pid = need to turn left
     # Positive total_pid = need to turn right
     # Try to keep pid 0
-    steer_val = map_func(total_pid, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, 0.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
-    if total_pid < 0:
+    steer_val = map_func(calibrated_value, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, 0.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
+    if calibrated_value < 0:
         #print('Left: %s' % total_pid)
         car_controller.turn(abs(steer_val), left=True)
 
-    elif total_pid > 0:
+    elif calibrated_value > 0:
         #print('Right: %s' % total_pid)
-        car_controller.turn(abs(steer_val), left=False)
+        car_controller.turn(abs(steer_val), right=True)
 
     # Motors slow down around bends
     #motor_speed = map_func(abs(total_pid), -3.0, 3.0, 60.0, 75.0)

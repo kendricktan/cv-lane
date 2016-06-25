@@ -36,10 +36,10 @@ class Controller():
     # Turns
     # range = 50 <= x <= 150
     # 50 = full right, 150 = full left
-    def turn(self, val, left=True):
+    def turn(self, val, left=False, right=False):
         if left:
             val = 100 + val
-        else:
+        elif right:
             val = 100 - val
 
         if val < 50:
