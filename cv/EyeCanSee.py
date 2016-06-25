@@ -23,7 +23,7 @@ class EyeCanSee(object):
             self.vs.camera.saturation = cvsettings.SATURATION
             self.vs.camera.rotation = cvsettings.ROTATION
             self.vs.camera.video_stabilization = cvsettings.VIDEO_STABALIZATION
-            self.vs.camera.ISO = cvsettings.ISO
+            self.vs.camera.iso = cvsettings.ISO
             self.vs.camera.brightness = cvsettings.BRIGHTNESS
             self.vs.camera.contrast = cvsettings.CONTRAST
 
@@ -50,8 +50,8 @@ class EyeCanSee(object):
     def on_mouse(self, event, x, y, flag, param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
             # Circle to indicate hsv location, and update frame
-            cv2.circle(self.img, (x, y), 3, (0, 0, 255))
-            cv2.imshow('hsv_extractor', self.img)
+            cv2.circle(self.img_debug, (x, y), 3, (0, 0, 255))
+            cv2.imshow('hsv_extractor', self.img_debug)
 
             # Print values
             values = self.hsv_frame[y, x]
@@ -61,11 +61,12 @@ class EyeCanSee(object):
         cv2.namedWindow('hsv_extractor')
         while True:
             self.grab_frame()
+            cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING + 20), (0, 250, 0), 2)
             self.hsv_frame = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
 
             # Mouse handler
             cv2.setMouseCallback('hsv_extractor', self.on_mouse, 0)
-            cv2.imshow('hsv_extractor', self.img)
+            cv2.imshow('hsv_extractor', self.img_debug)
 
             key = cv2.waitKey(0) & 0xFF
             if key == ord('q'):

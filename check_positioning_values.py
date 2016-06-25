@@ -14,14 +14,6 @@ import ai.aisettings as aisettings
 import cv.cvsettings as cvsettings
 import controller.controllersettings as ctlsettings
 
-print("Initialising...")
-
-GPIO.setmode(GPIO.BOARD)  # Required to setup the naming convention
-GPIO.setwarnings(False)  # Ignore annoying warnings
-GPIO.setup(11, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Arming pin is input
-GPIO.setup(40, GPIO.OUT)  # LED pin is output
-GPIO.output(40, 1)  # Set LED pin to "high" or on
-
 # Our class instances
 camera = EyeCanSee()
 
@@ -41,43 +33,12 @@ pid = PID(
     max_threshold=ctlsettings.PID_MAX_VAL
 )
 
-# Controllers
-car_controller = Controller()
-car_controller.stop()
-car_controller.straighten()
-
-# Wait for the switch to be "armed" before starting
-# (and blink the LED rapidly so we know)
-print("Initialisation complete.")
-
-if (GPIO.input(11) == 1):
-    print("Start the CV by turning the arming switch on.")
-
-while (GPIO.input(11) == 1):
-    GPIO.output(40, 1)
-    time.sleep(0.1)
-    GPIO.output(40, 0)
-    time.sleep(0.25)
-
-for i in range(0, 5):
-    GPIO.output(40, 1)
-    time.sleep(0.1)
-    GPIO.output(40, 0)
-    time.sleep(0.25)
-
-time.sleep(0.5)  # Leave a 0.5 second delay so it alternates (ie blinks)
-
-print('Starting autonomous control now...')
-
 for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
-    while (GPIO.input(11) == 1):
-        car_controller.stop()  # Reset throttle
-        car_controller.straighten()  # Reset steering
-
     # Trys and get our lane
     camera.where_lane_be()
 
     total_pid = 0
+    filtered_value = 0
 
     # If it detects lane, then proceed, otherwise use previous region
     if camera.detected_lane:
@@ -96,26 +57,13 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Positive total_pid = need to turn right
     # Try to keep pid 0
     steer_val = map_func(total_pid, ctlsettings.PID_MIN_VAL, ctlsettings.PID_MAX_VAL, 0.0, 50.0) # 50 because 50 <= x <= 150 (100 is neutral)
-    if total_pid < 0:
-        #print('Left: %s' % total_pid)
-        car_controller.turn(abs(steer_val), left=True)
+    print('Camera relative error: %s'% camera.relative_error)
+    print('Filtered value: %s'% filtered_value)
+    print('Total pid: %s' % total_pid)
+    if total_pid > 0:
+        print('Left: %s' % steer_val)
 
-    elif total_pid > 0:
-        #print('Right: %s' % total_pid)
-        car_controller.turn(abs(steer_val), left=False)
-
-    # Motors slow down around bends
-    #motor_speed = map_func(abs(total_pid), -3.0, 3.0, 60.0, 75.0)
-    car_controller.run_speed(40)
-
+    elif total_pid < 0:
+        print('Right: %s' % steer_val)
 
     time.sleep(0.05)
-
-# Turn everything off now that we're done and exit the program
-car_controller.straighten()
-car_controller.stop()
-
-# LED
-GPIO.output(40, 0)
-print("Finished running CV.  Now exiting the program.")
-
