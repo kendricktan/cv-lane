@@ -29,8 +29,8 @@ pid = PID(
     p=aisettings.P_,
     i=aisettings.I_,
     d=aisettings.D_,
-    min_threshold=ctlsettings.PID_MIN_VAL,
-    max_threshold=ctlsettings.PID_MAX_VAL
+    min_threshold=aisettings.PID_MIN_VAL,
+    max_threshold=aisettings.PID_MAX_VAL
 )
 
 for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
@@ -53,7 +53,7 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
         car_controller.turn(calibrated_value), left=True)
 
     elif filtered_value > 0:
-        print('Right: %s' % calibrated_value)    
+        print('Right: %s' % calibrated_value)
 
     print('Is lane detected: %s' % str(camera.detected_lane))
     print('Camera relative error: %s'% camera.relative_error)
