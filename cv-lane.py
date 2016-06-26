@@ -68,6 +68,11 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
 
     # Doesn't work without sleep 0.03 or more for some reason...
     car_controller.run_speed(35)
+<<<<<<< HEAD
+
+=======
+    time.sleep(0.03)
+>>>>>>> 3970a9acb36cfe8a7a48c1d886e3edef506c4c7f
 
 
 # Turn everything off now that we're done and exit the program
