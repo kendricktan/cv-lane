@@ -239,7 +239,6 @@ class EyeCanSee(object):
         top_centered_coord = (int(top_xy[0] / 2), int(top_xy[1] / 2))
 
         # Left can't be greater than right and vice-versa
-<<<<<<< HEAD
         if left_xy_top > right_xy_top:
             top_centered_coord = (0, top_centered_coord[1])
         elif right_xy_top < left_xy_top:
@@ -249,14 +248,6 @@ class EyeCanSee(object):
             bottom_centered_coord = (0, bottom_centered_coord[1])
         elif right_xy_bottom < left_xy_bottom:
             bottom_centered_coord = (cvsettings.CAMERA_WIDTH, top_centered_coord[1])
-=======
-        if left_xy_top > right_xy_top or right_xy_top < left_xy_top:
-            top_centered_coord = (self.center, top_centered_coord[1])
-
-        if left_xy_bottom > right_xy_bottom or right_xy_bottom < left_xy_bottom:
-             bottom_centered_coord = (self.center, bottom_centered_coord[1])
->>>>>>> 3970a9acb36cfe8a7a48c1d886e3edef506c4c7f
-
 
         if self.debug:
             cv2.circle(self.img_debug, bottom_centered_coord, 5, (0, 255, 0), 3)
@@ -281,14 +272,9 @@ class EyeCanSee(object):
         right_x = cvsettings.CAMERA_WIDTH
 
         # Image region with objects
-<<<<<<< HEAD
-        img_roi_object = np.copy(self.img[cvsettings.OBJECT_HEIGHT_PADDING : int(cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), left_x:right_x])
-        img_roi_object_hsv = np.copy(cv2.cvtColor(img_roi_object, cv2.COLOR_BGR2HSV))
-=======
         """
         img_roi_object = np.copy(self.img[cvsettings.HEIGHT_PADDING_TOP:int(cvsettings.HEIGHT_PADDING_BOTTOM + cvsettings.IMG_ROI_HEIGHT), left_x:right_x])
         img_roi_object_hsv = cv2.cvtColor(img_roi_object, cv2.COLOR_BGR2HSV).copy()
->>>>>>> 3970a9acb36cfe8a7a48c1d886e3edef506c4c7f
 
         # Filtering color and blurring
         for (lower, upper) in cvsettings.OBJECT_HSV_RANGE:
@@ -321,16 +307,13 @@ class EyeCanSee(object):
         except:
             pass
 
-<<<<<<< HEAD
         if self.debug:
             cv2.rectangle(self.img_debug, (left_x, cvsettings.OBJECT_HEIGHT_PADDING), (right_x, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
             cv2.imshow('Blurred object', blurred_object)
-=======
         cv2.rectangle(self.img_debug, (left_x, cvsettings.HEIGHT_PADDING_TOP), (right_x, cvsettings.HEIGHT_PADDING_BOTTOM), (0, 255, 0), 2)
         cv2.imshow('Object detection', self.img_debug)
         cv2.imshow('Blurred object', blurred_object)
         """
->>>>>>> 3970a9acb36cfe8a7a48c1d886e3edef506c4c7f
 
 
     # Where are we relative to our lane
