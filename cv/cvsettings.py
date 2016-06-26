@@ -18,9 +18,9 @@ BRIGHTNESS = 60
 PROP_FORMAT = 1
 
 # Thresholding parameters
-BLUE_HSV_RANGE = [([80, 60, 65], [125, 105, 125])]  # [([30, 30, 60], [80, 80, 90])]
-YELLOW_HSV_RANGE = [([20, 20, 120], [50, 100, 180])]  # [([25, 230, 230], [50, 255, 255])]
-
+BLUE_HSV_RANGE = [([80, 60, 65], [125, 105, 125])]
+YELLOW_HSV_RANGE = [([20, 20, 120], [50, 100, 180])]
+OBJECT_HSV_RANGE = [([0, 0, 0], [0, 0, 0])]
 HEIGHT_PADDING_BOTTOM = int(CAMERA_HEIGHT / 1.55) # Where the bottom image ROI is gonna ba
 HEIGHT_PADDING_TOP = int(CAMERA_HEIGHT / 1.8) # Where the top image ROI is gonna be
 

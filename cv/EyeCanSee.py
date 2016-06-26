@@ -250,6 +250,54 @@ class EyeCanSee(object):
 
         return (top_error + relative_error + bottom_error)/3
 
+    # Object avoidance
+    def where_object_be(self):
+        # We only want to detect objects in our path: center of top region and bottom region
+        # So to save processing speed, we'll only threshold from center of top region to center of bottom region
+        left_x = np.minimum(self.center_coord_top[0], self.center_coord_bottom[0])
+        right_x = np.minimum(self.center_coord_top[0], self.center_coord_bottom[0])
+
+        # Image region with objects
+        img_roi_object = np.copy(self.img[cvsettings.HEIGHT_PADDING_TOP:int(cvsettings.HEIGHT_PADDING_BOTTOM + cvsettings.IMG_ROI_HEIGHT), left_x:right_x])
+        img_roi_object_hsv = cv2.cvtColor(img_roi_object, cv2.COLOR_BGR2HSV).copy()
+
+        # Filtering color and blurring
+        for (lower, upper) in cvsettings.OBJECT_HSV_RANGE:
+            lower = np.array(lower, dtype='uint8')
+            upper = np.array(upper, dtype='uint8')
+
+            mask_object = cv2.inRange(img_roi_object_hsv, lower, upper)
+
+        blurred_object = cv2.medianBlur(mask_object, 5)
+
+        # Finding position of object (if its there)
+        _, contours, hierarchy = cv2.findContours(blurred_object.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        try:
+            areas = [cv2.contourArea(c) for c in contours]
+            max_index = np.argmax(areas)
+            cnt = contours[max_index]
+
+            # Metadata of contour
+            x, y, w, h = cv2.boundingRect(cnt)
+
+            # Normalize it to the original picture
+            x += int(cvsettings.WIDTH_PADDING + w / 2)
+            y += int(cvsettings.HEIGHT_PADDING_TOP + h / 2)
+
+            if self.debug:
+                cv2.circle(self.img_debug, (x, y), 5, (240, 32, 160), 2)
+
+        # If it throws an error then it doesn't detect an object
+        except:
+            pass
+
+        cv2.rectangle(self.img_debug, (left_x, cvsettings.HEIGHT_PADDING_TOP), (right_x, cvsettings.HEIGHT_PADDING_BOTTOM), (0, 255, 0), 2)
+        cv2.imshow('Object detection', self.img_debug)
+        cv2.imshow('Blurred object', blurred_object)
+
+
+
     # Where are we relative to our lane
     def where_lane_be(self):
         # Camera grab frame and normalize it
