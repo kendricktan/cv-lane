@@ -69,7 +69,7 @@ class EyeCanSee(object):
             cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP-2), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP + cvsettings.IMG_ROI_HEIGHT + 2), (0, 250, 0), 2)
 
             # Object
-            cv2.rectangle(self.img_debug, (0, cvsettings.OBJECT_HEIGHT_PADDING), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
+            cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
 
             self.hsv_frame = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
 
@@ -186,13 +186,6 @@ class EyeCanSee(object):
 
                 self.detected_lane = True
 
-                if self.debug:
-                    # Draw blue circle to blue line, and so on
-                    if 'left' in key:
-                        cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
-                    else:
-                        cv2.circle(self.img_debug, (x, y), 5, (0, 255, 255), 2)
-
             # If it throws an error then it doesn't have a ROI
             # Means we're too far off to the left or right
             except:
@@ -211,13 +204,6 @@ class EyeCanSee(object):
                 contour_metadata[key] = (x, y)
 
                 self.detected_lane = False
-
-                if self.debug:
-                    # Draw blue circle to blue line, and so on
-                    if 'left' in key:
-                        cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
-                    else:
-                        cv2.circle(self.img_debug, (x, y), 5, (0, 255, 255), 2)
 
         return contour_metadata
 
@@ -249,10 +235,6 @@ class EyeCanSee(object):
         elif right_xy_bottom < left_xy_bottom:
             bottom_centered_coord = (cvsettings.CAMERA_WIDTH, top_centered_coord[1])
 
-        if self.debug:
-            cv2.circle(self.img_debug, bottom_centered_coord, 5, (0, 255, 0), 3)
-            cv2.circle(self.img_debug, top_centered_coord, 5, (0, 255, 0), 3)
-
         return bottom_centered_coord, top_centered_coord
 
     # Gets the error of the centered coordinates (x)
@@ -272,8 +254,7 @@ class EyeCanSee(object):
         right_x = cvsettings.CAMERA_WIDTH
 
         # Image region with objects
-        """
-        img_roi_object = np.copy(self.img[cvsettings.HEIGHT_PADDING_TOP:int(cvsettings.HEIGHT_PADDING_BOTTOM + cvsettings.IMG_ROI_HEIGHT), left_x:right_x])
+        img_roi_object = self.img[cvsettings.OBJECT_HEIGHT_PADDING : int(cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), left_x:right_x]
         img_roi_object_hsv = cv2.cvtColor(img_roi_object, cv2.COLOR_BGR2HSV).copy()
 
         # Filtering color and blurring
@@ -288,32 +269,41 @@ class EyeCanSee(object):
         # Finding position of object (if its there)
         _, contours, hierarchy = cv2.findContours(blurred_object.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        try:
-            areas = [cv2.contourArea(c) for c in contours]
-            max_index = np.argmax(areas)
-            cnt = contours[max_index]
+        left_x = self.contour_metadata['left_top'][0]
+        right_x = self.contour_metadata['right_top'][0]
 
-            # Metadata of contour
-            x, y, w, h = cv2.boundingRect(cnt)
+        for c in contours:
+            areas = cv2.contourArea(c)
 
-            # Normalize it to the original picture
-            x += int(cvsettings.WIDTH_PADDING + w / 2)
-            y += int(cvsettings.HEIGHT_PADDING_TOP + h / 2)
+            # Object needs to be larger than a certain area
+            if areas > cvsettings.OBJECT_AREA:
+                x, y, w, h = cv2.boundingRect(c)
 
-            if self.debug:
-                cv2.circle(self.img_debug, (x, y), 5, (240, 32, 160), 2)
+                y += int(cvsettings.OBJECT_HEIGHT_PADDING + h / 2)
 
-        # If it throws an error then it doesn't detect an object
-        except:
-            pass
+                # Confusing part - this finds the object and makes it think that 
+                # it is also a line to avoid bumping into it
+                # It +w and -w to find which line its closest to and then set 
+                # the opposite as to be the new left/right lane
+                # e.g. line is closest to left lane (x-w), so left lane new x is
+                # (x+w)
+
+                distance_to_left = abs((x-w) - left_x)
+                distance_to_right = abs((x+w) - right_x)
+
+                # Make object's left most area the middle of right lane
+                if distance_to_left > distance_to_right:
+                    self.contour_metadata['right_top'] = ((x-w), self.contour_metadata['right_top'][1])
+
+                # Make object's right most area the middle of left lane
+                elif distance_to_right > distance_to_right:
+                    self.contour_metadata['left_top'] = ((x+w), self.contour_metadata['left_top'][1])
+
+                if self.debug:
+                    cv2.circle(self.img_debug, (x, y), 5, (240, 32, 160), 2)
 
         if self.debug:
-            cv2.rectangle(self.img_debug, (left_x, cvsettings.OBJECT_HEIGHT_PADDING), (right_x, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
             cv2.imshow('Blurred object', blurred_object)
-        cv2.rectangle(self.img_debug, (left_x, cvsettings.HEIGHT_PADDING_TOP), (right_x, cvsettings.HEIGHT_PADDING_BOTTOM), (0, 255, 0), 2)
-        cv2.imshow('Object detection', self.img_debug)
-        cv2.imshow('Blurred object', blurred_object)
-        """
 
 
     # Where are we relative to our lane
@@ -329,16 +319,35 @@ class EyeCanSee(object):
         # Get contour meta data
         self.contour_metadata = self.get_contour_metadata()
 
+        # Finds objects and (and corrects lane position)
+        # this overwrite contour_metadata
+        self.where_object_be()
+
         # Find the center of the lanes (bottom and top) [we wanna be in between]
         self.center_coord_bottom, self.center_coord_top = self.get_centered_coord()
-
-        # Finds objects and (and corrects lane position)
-        self.where_object_be()
 
         # Gets relative error between top center and bottom center
         self.relative_error = self.get_errors()
 
         if self.debug:
+            # Drawing locations 
+            blue_top_xy = self.contour_metadata['top_left']
+            blue_bottom_xy = self.contour_metadata['bottom_left']
+            yellow_top_xy = self.contour_metadata['top_right']
+            yellow_bottom_xy = self.contour_metadata['bottom_right']
+
+            # Circles to indicate lanes
+            cv2.circle(self.img_debug, blue_top_xy, 5, (255, 0, 0), 2)
+            cv2.circle(self.img_debug, blue_bottom_xy, 5, (255, 0, 0), 2)
+            cv2.circle(self.img_debug, yellow_top_xy, 5, (0, 255, 255), 2)
+            cv2.circle(self.img_debug, yellow_bottom_xy, 5, (0, 255, 255), 2)
+            cv2.circle(self.img_debug, self.center_coord_bottom, 5, (0, 255, 0), 3)
+            cv2.circle(self.img_debug, self.center_coord_top, 5, (0, 255, 0), 3)
+
+            # ROI for object detection
+            cv2.rectangle(self.img_debug, (left_x, cvsettings.OBJECT_HEIGHT_PADDING), (right_x, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
+
+            # Displaying image
             cv2.imshow('img', self.img_debug)
             #cv2.imshow('img_roi top', self.img_roi_top)
             #cv2.imshow('img_roi bottom', self.img_roi_bottom)
@@ -369,32 +378,6 @@ class EyeCanSee(object):
 
         print('Time taken: {:.2f}'.format(fps.elapsed()))
         print('~ FPS : {:.2f}'.format(fps.fps()))
-
-    # Use this to save images to a location
-    def save_images(self, dirname='defisheye'):
-        import os
-        img_no = 1
-
-        # Makes the directory
-        if not os.path.exists('./' + dirname):
-            os.mkdir(dirname)
-
-        while True:
-            self.grab_frame()
-
-            if self.debug:
-                cv2.imshow('frame', self.img)
-
-            k = cv2.waitKey(1) & 0xFF
-
-            if k == ord('s'):
-                cv2.imwrite(os.path.join(dirname, 'fisheye_' + str(img_no) + '.jpg'), self.img)
-                img_no += 1
-
-            elif k == ord('q'):
-                break
-
-        cv2.destroyAllWindows()
 
     # Destructor
     def __del__(self):

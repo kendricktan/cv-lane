@@ -28,5 +28,6 @@ IMG_ROI_HEIGHT = 50
 
 OBJECT_HSV_RANGE = [([0, 0, 0], [0, 0, 0])]
 OBJECT_HEIGHT_PADDING = 30
+OBJECT_AREA = 50
 FRAMES = 270  # How many frames to do CV for
 
