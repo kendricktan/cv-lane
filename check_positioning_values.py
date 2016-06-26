@@ -19,6 +19,7 @@ camera = EyeCanSee()
 
 # Kalman filter
 kalman_filter = KalmanFilter(aisettings.VAR, aisettings.EST_VAR)
+kalman_filter.input_latest_noisy_measurement(0)
 
 # previous values (in case can't detect line)
 # we'll go and continue previous location
@@ -32,8 +33,9 @@ pid = PID(
     min_threshold=aisettings.PID_MIN_VAL,
     max_threshold=aisettings.PID_MAX_VAL
 )
+pid.update(0)
 
-for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
+for i in range(0, 5):  # For the amount of frames we want CV on
     # Trys and get our lane
     camera.where_lane_be()
 
@@ -48,21 +50,14 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Positive total_pid = need to turn right
     # Try to keep pid 0
 
-    if filtered_value < 0:
-        print('Left: %s' % calibrated_value)
-        car_controller.turn(calibrated_value), left=True)
-
-    elif filtered_value > 0:
-        print('Right: %s' % calibrated_value)
-
     print('Is lane detected: %s' % str(camera.detected_lane))
     print('Camera relative error: %s'% camera.relative_error)
     print('Filtered value: %s'% filtered_value)
 
-    if filtered_value > 0:
+    if filtered_value < 0:
         print('Left: %s' % calibrated_value)
 
-    elif filtered_value < 0:
+    elif filtered_value > 0:
         print('Right: %s' % calibrated_value)
 
     print('----')
