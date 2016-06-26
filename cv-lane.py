@@ -15,24 +15,12 @@ import cv.cvsettings as cvsettings
 
 print("Initialising...")
 
-GPIO.setmode(GPIO.BOARD)  # Required to setup the naming convention
-GPIO.setwarnings(False)  # Ignore annoying warnings
-GPIO.setup(11, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Arming pin is input
-GPIO.setup(40, GPIO.OUT)  # LED pin is output
-GPIO.output(40, 1)  # Set LED pin to "high" or on
-
-# Blinks LED (hardcoded to GPIO 40)
-def blink():
-    GPIO.output(40, 1)
-    time.sleep(0.1)
-    GPIO.output(40, 0)
-    time.sleep(0.25)
-
 # Our class instances
 camera = EyeCanSee()
 
 # Kalman filter
 kalman_filter = KalmanFilter(aisettings.VAR, aisettings.EST_VAR)
+kalman_filter.input_latest_noisy_measurement(0)
 
 # PID for each region (if we do decide to add any)
 pid = PID(
@@ -42,6 +30,7 @@ pid = PID(
     min_threshold=aisettings.PID_MIN_VAL,
     max_threshold=aisettings.PID_MAX_VAL
 )
+pid.update(0)
 
 # Controllers
 car_controller = Controller()
@@ -52,20 +41,11 @@ car_controller.straighten()
 # (and blink the LED rapidly so we know)
 print("Initialisation complete.")
 
-if (GPIO.input(11) == 1):
-    print("Start the CV by turning the arming switch on.")
-
-while (GPIO.input(11) == 1):
-    blink()
-
 raw_input("Please press any key to start driving *immediately*")
 print("Starting autonomous control now!")
 
-for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
-    while (GPIO.input(11) == 1):
-        car_controller.stop()  # Reset throttle
-        car_controller.straighten()  # Reset steering
 
+for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Trys and get our lane
     camera.where_lane_be()
 
@@ -81,22 +61,18 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Try to keep pid 0
 
     if filtered_value < 0:
-        #print('Left: %s' % total_pid)
         car_controller.turn(calibrated_value, left=True)
 
     elif filtered_value > 0:
-        #print('Right: %s' % total_pid)
         car_controller.turn(calibrated_value, right=True)
 
+    # Doesn't work without sleep 0.03 or more for some reason...
     car_controller.run_speed(35)
 
-    # Doesn't work without sleep 0.03 or more for some reason...
-    time.sleep(0.03)
 
 # Turn everything off now that we're done and exit the program
 car_controller.straighten()
 car_controller.stop()
 
 # LED
-GPIO.output(40, 0)
 print("Finished running CV.  Now exiting the program.")

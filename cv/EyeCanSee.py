@@ -68,6 +68,9 @@ class EyeCanSee(object):
             # Top ROI
             cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP-2), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP + cvsettings.IMG_ROI_HEIGHT + 2), (0, 250, 0), 2)
 
+            # Object
+            cv2.rectangle(self.img_debug, (0, cvsettings.OBJECT_HEIGHT_PADDING), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
+
             self.hsv_frame = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
 
             # Mouse handler
@@ -235,6 +238,18 @@ class EyeCanSee(object):
         top_xy = (left_xy_top[0] + right_xy_top[0], left_xy_top[1] + right_xy_top[1])
         top_centered_coord = (int(top_xy[0] / 2), int(top_xy[1] / 2))
 
+        # Left can't be greater than right and vice-versa
+        if left_xy_top > right_xy_top:
+            top_centered_coord = (0, top_centered_coord[1])
+        elif right_xy_top < left_xy_top:
+            top_centered_corrd = (cvsettings.CAMERA_WIDTH, top_centered_coord[1])
+
+        if left_xy_bottom > right_xy_bottom:
+            bottom_centered_coord = (0, bottom_centered_coord[1])
+        elif right_xy_bottom < left_xy_bottom:
+            bottom_centered_coord = (cvsettings.CAMERA_WIDTH, top_centered_coord[1])
+
+
         if self.debug:
             cv2.circle(self.img_debug, bottom_centered_coord, 5, (0, 255, 0), 3)
             cv2.circle(self.img_debug, top_centered_coord, 5, (0, 255, 0), 3)
@@ -244,22 +259,22 @@ class EyeCanSee(object):
     # Gets the error of the centered coordinates (x)
     # Also normlizes their values
     def get_errors(self):
-        top_error = (self.center_coord_top[0] - self.center)/(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
-        bottom_error = (self.center_coord_bottom[0] - self.center)/(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
-        relative_error = (self.center_coord_top[0] - self.center_coord_bottom[0])/(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
+        top_error = (float(self.center_coord_top[0]) - float(self.center))/float(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
+        bottom_error = (float(self.center_coord_bottom[0]) - float(self.center))/float(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
+        relative_error = (float(self.center_coord_top[0]) - float(self.center_coord_bottom[0]))/float(cvsettings.CAMERA_WIDTH + cvsettings.WIDTH_PADDING)
 
-        return (top_error + relative_error + bottom_error)/3
+        return (top_error + relative_error + bottom_error)/3.0
 
     # Object avoidance
     def where_object_be(self):
         # We only want to detect objects in our path: center of top region and bottom region
         # So to save processing speed, we'll only threshold from center of top region to center of bottom region
-        left_x = np.minimum(self.center_coord_top[0], self.center_coord_bottom[0])
-        right_x = np.minimum(self.center_coord_top[0], self.center_coord_bottom[0])
+        left_x = cvsettings.WIDTH_PADDING
+        right_x = cvsettings.CAMERA_WIDTH
 
         # Image region with objects
-        img_roi_object = np.copy(self.img[cvsettings.HEIGHT_PADDING_TOP:int(cvsettings.HEIGHT_PADDING_BOTTOM + cvsettings.IMG_ROI_HEIGHT), left_x:right_x])
-        img_roi_object_hsv = cv2.cvtColor(img_roi_object, cv2.COLOR_BGR2HSV).copy()
+        img_roi_object = np.copy(self.img[cvsettings.OBJECT_HEIGHT_PADDING : int(cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), left_x:right_x])
+        img_roi_object_hsv = np.copy(cv2.cvtColor(img_roi_object, cv2.COLOR_BGR2HSV))
 
         # Filtering color and blurring
         for (lower, upper) in cvsettings.OBJECT_HSV_RANGE:
@@ -292,10 +307,9 @@ class EyeCanSee(object):
         except:
             pass
 
-        cv2.rectangle(self.img_debug, (left_x, cvsettings.HEIGHT_PADDING_TOP), (right_x, cvsettings.HEIGHT_PADDING_BOTTOM), (0, 255, 0), 2)
-        cv2.imshow('Object detection', self.img_debug)
-        cv2.imshow('Blurred object', blurred_object)
-
+        if self.debug:
+            cv2.rectangle(self.img_debug, (left_x, cvsettings.OBJECT_HEIGHT_PADDING), (right_x, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
+            cv2.imshow('Blurred object', blurred_object)
 
 
     # Where are we relative to our lane
@@ -313,6 +327,9 @@ class EyeCanSee(object):
 
         # Find the center of the lanes (bottom and top) [we wanna be in between]
         self.center_coord_bottom, self.center_coord_top = self.get_centered_coord()
+
+        # Finds objects and (and corrects lane position)
+        self.where_object_be()
 
         # Gets relative error between top center and bottom center
         self.relative_error = self.get_errors()

@@ -12,7 +12,7 @@ for i in range(0, 10):
 
 print('Turning right')
 for i in range(0, 10):
-    car_controller.turn(10*i, left=False)
+    car_controller.turn(10*i, right=True)
     time.sleep(0.25)
 
 car_controller.straighten()

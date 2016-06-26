@@ -4,7 +4,7 @@ import serial
 class Controller():
     def __init__(self, is_motor_forwards=True):
         # Our serial to communicate with arduino
-        self.ser = serial.Serial('/dev/ttyUSB0', 9600)
+        self.ser = serial.Serial('/dev/ttyUSB0', 57600)
         self.is_motor_forwards = is_motor_forwards
 
         self.run_speed(0)
@@ -39,9 +39,9 @@ class Controller():
     def turn(self, val, left=False, right=False):
 
         if left:
-            val = 100 + abs(val)
+            val = 100 + int(abs(val))
         elif right:
-            val = 100 - abs(val)
+            val = 100 - int(abs(val))
 
         if val < 50:
             val = 50
