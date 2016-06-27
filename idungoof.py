@@ -1,4 +1,4 @@
-from controller.controllers import *
+from controller.controllers import Controller
 import time
 
 car_controller = Controller()

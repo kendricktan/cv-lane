@@ -1,3 +1,4 @@
+import datetime
 import time
 
 import cv2
@@ -9,7 +10,7 @@ from imutils.video.pivideostream import PiVideoStream
 
 
 class EyeCanSee(object):
-    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_update=0.035):
+    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_ms=20):
         # Our video stream
         # If its not a usb webcam then get pi camera
         if not is_usb_webcam:
@@ -43,12 +44,14 @@ class EyeCanSee(object):
         # To determine if we actually detected lane or not
         self.detected_lane = False
 
-        # debug mode on?
+        # debug mode on? (to display processed images)
         self.debug = debug
 
-        # Period between each update (in seconds)
-        self.period_update = period_update
-        self.start_time = time.time()
+        # Time interval between in update (in ms)
+        self.period_ms = period_ms
+
+        # Starting time
+        self.start_time = datetime.datetime.now()
 
     # Mouse event handler for get_hsv
     def on_mouse(self, event, x, y, flag, param):
@@ -71,6 +74,9 @@ class EyeCanSee(object):
 
             # Top ROI
             cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP-2), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP + cvsettings.IMG_ROI_HEIGHT + 2), (0, 250, 0), 2)
+
+            # Object
+            cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
 
             self.hsv_frame = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
 
@@ -187,13 +193,6 @@ class EyeCanSee(object):
 
                 self.detected_lane = True
 
-                if self.debug:
-                    # Draw blue circle to blue line, and so on
-                    if 'left' in key:
-                        cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
-                    else:
-                        cv2.circle(self.img_debug, (x, y), 5, (0, 255, 255), 2)
-
             # If it throws an error then it doesn't have a ROI
             # Means we're too far off to the left or right
             except:
@@ -212,13 +211,6 @@ class EyeCanSee(object):
                 contour_metadata[key] = (x, y)
 
                 self.detected_lane = False
-
-                if self.debug:
-                    # Draw blue circle to blue line, and so on
-                    if 'left' in key:
-                        cv2.circle(self.img_debug, (x, y), 5, (255, 0, 0), 2)
-                    else:
-                        cv2.circle(self.img_debug, (x, y), 5, (0, 255, 255), 2)
 
         return contour_metadata
 
@@ -240,16 +232,15 @@ class EyeCanSee(object):
         top_centered_coord = (int(top_xy[0] / 2), int(top_xy[1] / 2))
 
         # Left can't be greater than right and vice-versa
-        if left_xy_top > right_xy_top or right_xy_top < left_xy_top:
-            top_centered_coord = (self.center, top_centered_coord[1])
+        if left_xy_top > right_xy_top:
+            top_centered_coord = (0, top_centered_coord[1])
+        elif right_xy_top < left_xy_top:
+            top_centered_corrd = (cvsettings.CAMERA_WIDTH, top_centered_coord[1])
 
-        if left_xy_bottom > right_xy_bottom or right_xy_bottom < left_xy_bottom:
-             bottom_centered_coord = (self.center, bottom_centered_coord[1])
-
-
-        if self.debug:
-            cv2.circle(self.img_debug, bottom_centered_coord, 5, (0, 255, 0), 3)
-            cv2.circle(self.img_debug, top_centered_coord, 5, (0, 255, 0), 3)
+        if left_xy_bottom > right_xy_bottom:
+            bottom_centered_coord = (0, bottom_centered_coord[1])
+        elif right_xy_bottom < left_xy_bottom:
+            bottom_centered_coord = (cvsettings.CAMERA_WIDTH, top_centered_coord[1])
 
         return bottom_centered_coord, top_centered_coord
 
@@ -270,8 +261,7 @@ class EyeCanSee(object):
         right_x = cvsettings.CAMERA_WIDTH
 
         # Image region with objects
-        img_roi_object = self.img[cvsettings.OBJECT_HEIGHT_PADDING: int(
-            cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), left_x:right_x]
+        img_roi_object = self.img[cvsettings.OBJECT_HEIGHT_PADDING : int(cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), left_x:right_x]
         img_roi_object_hsv = cv2.cvtColor(img_roi_object, cv2.COLOR_BGR2HSV).copy()
 
         # Filtering color and blurring
@@ -298,23 +288,23 @@ class EyeCanSee(object):
 
                 y += int(cvsettings.OBJECT_HEIGHT_PADDING + h / 2)
 
-                # Confusing part - this finds the object and makes it think that
+                # Confusing part - this finds the object and makes it think that 
                 # it is also a line to avoid bumping into it
-                # It +w and -w to find which line its closest to and then set
+                # It +w and -w to find which line its closest to and then set 
                 # the opposite as to be the new left/right lane
                 # e.g. line is closest to left lane (x-w), so left lane new x is
                 # (x+w)
 
-                distance_to_left = abs((x - w) - left_x)
-                distance_to_right = abs((x + w) - right_x)
+                distance_to_left = abs((x-w) - left_x)
+                distance_to_right = abs((x+w) - right_x)
 
                 # Make object's left most area the middle of right lane
                 if distance_to_left > distance_to_right:
-                    self.contour_metadata['right_top'] = ((x - w), self.contour_metadata['right_top'][1])
+                    self.contour_metadata['right_top'] = ((x-w), self.contour_metadata['right_top'][1])
 
                 # Make object's right most area the middle of left lane
                 elif distance_to_right > distance_to_right:
-                    self.contour_metadata['left_top'] = ((x + w), self.contour_metadata['left_top'][1])
+                    self.contour_metadata['left_top'] = ((x+w), self.contour_metadata['left_top'][1])
 
                 if self.debug:
                     cv2.circle(self.img_debug, (x, y), 5, (240, 32, 160), 2)
@@ -325,11 +315,9 @@ class EyeCanSee(object):
 
     # Where are we relative to our lane
     def where_lane_be(self):
-        while (float(time.time()-self.start_time) < self.period_update):
+        # Running once every period_ms
+        while int(self.millis_interval(self.start_time, datetime.datetime.now())) < self.period_ms:
             pass
-
-        # updates time
-        self.start_time = time.time()
 
         # Camera grab frame and normalize it
         self.grab_frame()
@@ -342,7 +330,8 @@ class EyeCanSee(object):
         # Get contour meta data
         self.contour_metadata = self.get_contour_metadata()
 
-        # Object
+        # Finds objects and (and corrects lane position)
+        # this overwrite contour_metadata
         self.where_object_be()
 
         # Find the center of the lanes (bottom and top) [we wanna be in between]
@@ -351,8 +340,28 @@ class EyeCanSee(object):
         # Gets relative error between top center and bottom center
         self.relative_error = self.get_errors()
 
+        # Update time instance
+        self.start_time = datetime.datetime.now()
 
         if self.debug:
+            # Drawing locations 
+            blue_top_xy = self.contour_metadata['top_left']
+            blue_bottom_xy = self.contour_metadata['bottom_left']
+            yellow_top_xy = self.contour_metadata['top_right']
+            yellow_bottom_xy = self.contour_metadata['bottom_right']
+
+            # Circles to indicate lanes
+            cv2.circle(self.img_debug, blue_top_xy, 5, (255, 0, 0), 2)
+            cv2.circle(self.img_debug, blue_bottom_xy, 5, (255, 0, 0), 2)
+            cv2.circle(self.img_debug, yellow_top_xy, 5, (0, 255, 255), 2)
+            cv2.circle(self.img_debug, yellow_bottom_xy, 5, (0, 255, 255), 2)
+            cv2.circle(self.img_debug, self.center_coord_bottom, 5, (0, 255, 0), 3)
+            cv2.circle(self.img_debug, self.center_coord_top, 5, (0, 255, 0), 3)
+
+            # ROI for object detection
+            cv2.rectangle(self.img_debug, (left_x, cvsettings.OBJECT_HEIGHT_PADDING), (right_x, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
+
+            # Displaying image
             cv2.imshow('img', self.img_debug)
             #cv2.imshow('img_roi top', self.img_roi_top)
             #cv2.imshow('img_roi bottom', self.img_roi_bottom)
@@ -384,31 +393,14 @@ class EyeCanSee(object):
         print('Time taken: {:.2f}'.format(fps.elapsed()))
         print('~ FPS : {:.2f}'.format(fps.fps()))
 
-    # Use this to save images to a location
-    def save_images(self, dirname='defisheye'):
-        import os
-        img_no = 1
-
-        # Makes the directory
-        if not os.path.exists('./' + dirname):
-            os.mkdir(dirname)
-
-        while True:
-            self.grab_frame()
-
-            if self.debug:
-                cv2.imshow('frame', self.img)
-
-            k = cv2.waitKey(1) & 0xFF
-
-            if k == ord('s'):
-                cv2.imwrite(os.path.join(dirname, 'fisheye_' + str(img_no) + '.jpg'), self.img)
-                img_no += 1
-
-            elif k == ord('q'):
-                break
-
-        cv2.destroyAllWindows()
+    # Get time difference in milliseconds
+    def millis_interval(self, start, end):
+        """start and end are datetime instances"""
+        diff = end - start
+        millis = diff.days * 24 * 60 * 60 * 1000
+        millis += diff.seconds * 1000
+        millis += diff.microseconds / 1000
+        return millis
 
     # Destructor
     def __del__(self):

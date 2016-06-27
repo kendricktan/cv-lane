@@ -68,8 +68,6 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
 
     # Doesn't work without sleep 0.03 or more for some reason...
     car_controller.run_speed(35)
-    time.sleep(0.03)
-
 
 # Turn everything off now that we're done and exit the program
 car_controller.straighten()
