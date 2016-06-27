@@ -295,16 +295,16 @@ class EyeCanSee(object):
                 # e.g. line is closest to left lane (x-w), so left lane new x is
                 # (x+w)
 
-                distance_to_left = abs((x-w) - left_x)
-                distance_to_right = abs((x+w) - right_x)
+                distance_to_left = abs(x - left_x)
+                distance_to_right = abs(x+w - right_x)
 
                 # Make object's left most area the middle of right lane
                 if distance_to_left > distance_to_right:
-                    self.contour_metadata['right_top'] = ((x-w), self.contour_metadata['right_top'][1])
+                    self.contour_metadata['right_top'] = (x, self.contour_metadata['right_top'][1])
 
                 # Make object's right most area the middle of left lane
                 elif distance_to_right > distance_to_right:
-                    self.contour_metadata['left_top'] = ((x+w), self.contour_metadata['left_top'][1])
+                    self.contour_metadata['left_top'] = (x+w, self.contour_metadata['left_top'][1])
 
                 if self.debug:
                     cv2.circle(self.img_debug, (x, y), 5, (240, 32, 160), 2)
