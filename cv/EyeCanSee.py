@@ -1,4 +1,3 @@
-import datetime
 import time
 
 import cv2
@@ -10,7 +9,7 @@ from imutils.video.pivideostream import PiVideoStream
 
 
 class EyeCanSee(object):
-    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_ms=20):
+    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_s=0.020):
         # Our video stream
         # If its not a usb webcam then get pi camera
         if not is_usb_webcam:
@@ -48,10 +47,10 @@ class EyeCanSee(object):
         self.debug = debug
 
         # Time interval between in update (in ms)
-        self.period_ms = period_ms
+        self.period_s = period_s
 
         # Starting time
-        self.start_time = datetime.datetime.now()
+        self.start_time = time.time()
 
     # Mouse event handler for get_hsv
     def on_mouse(self, event, x, y, flag, param):
@@ -288,9 +287,9 @@ class EyeCanSee(object):
 
                 y += int(cvsettings.OBJECT_HEIGHT_PADDING + h / 2)
 
-                # Confusing part - this finds the object and makes it think that 
+                # Confusing part - this finds the object and makes it think that
                 # it is also a line to avoid bumping into it
-                # It +w and -w to find which line its closest to and then set 
+                # It +w and -w to find which line its closest to and then set
                 # the opposite as to be the new left/right lane
                 # e.g. line is closest to left lane (x-w), so left lane new x is
                 # (x+w)
@@ -316,8 +315,11 @@ class EyeCanSee(object):
     # Where are we relative to our lane
     def where_lane_be(self):
         # Running once every period_ms
-        while int(self.millis_interval(self.start_time, datetime.datetime.now())) < self.period_ms:
+        while float(time.time() - self.start_time) < self.period_s:
             pass
+
+        # Update time instance
+        self.start_time = time.time()
 
         # Camera grab frame and normalize it
         self.grab_frame()
@@ -332,7 +334,7 @@ class EyeCanSee(object):
 
         # Finds objects and (and corrects lane position)
         # this overwrite contour_metadata
-        self.where_object_be()
+        #self.where_object_be()
 
         # Find the center of the lanes (bottom and top) [we wanna be in between]
         self.center_coord_bottom, self.center_coord_top = self.get_centered_coord()
@@ -340,15 +342,12 @@ class EyeCanSee(object):
         # Gets relative error between top center and bottom center
         self.relative_error = self.get_errors()
 
-        # Update time instance
-        self.start_time = datetime.datetime.now()
-
         if self.debug:
-            # Drawing locations 
-            blue_top_xy = self.contour_metadata['top_left']
-            blue_bottom_xy = self.contour_metadata['bottom_left']
-            yellow_top_xy = self.contour_metadata['top_right']
-            yellow_bottom_xy = self.contour_metadata['bottom_right']
+            # Drawing locations
+            blue_top_xy = self.contour_metadata['left_top']
+            blue_bottom_xy = self.contour_metadata['left_bottom']
+            yellow_top_xy = self.contour_metadata['right_top']
+            yellow_bottom_xy = self.contour_metadata['right_bottom']
 
             # Circles to indicate lanes
             cv2.circle(self.img_debug, blue_top_xy, 5, (255, 0, 0), 2)
@@ -359,7 +358,7 @@ class EyeCanSee(object):
             cv2.circle(self.img_debug, self.center_coord_top, 5, (0, 255, 0), 3)
 
             # ROI for object detection
-            cv2.rectangle(self.img_debug, (left_x, cvsettings.OBJECT_HEIGHT_PADDING), (right_x, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
+            cv2.rectangle(self.img_debug, (0, cvsettings.OBJECT_HEIGHT_PADDING), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
 
             # Displaying image
             cv2.imshow('img', self.img_debug)
@@ -392,15 +391,6 @@ class EyeCanSee(object):
 
         print('Time taken: {:.2f}'.format(fps.elapsed()))
         print('~ FPS : {:.2f}'.format(fps.fps()))
-
-    # Get time difference in milliseconds
-    def millis_interval(self, start, end):
-        """start and end are datetime instances"""
-        diff = end - start
-        millis = diff.days * 24 * 60 * 60 * 1000
-        millis += diff.seconds * 1000
-        millis += diff.microseconds / 1000
-        return millis
 
     # Destructor
     def __del__(self):

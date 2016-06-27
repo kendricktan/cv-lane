@@ -12,7 +12,6 @@ import sys
 import threading
 import ai.aisettings as aisettings
 import cv.cvsettings as cvsettings
-import controller.controllersettings as ctlsettings
 
 # Our class instances
 camera = EyeCanSee()
