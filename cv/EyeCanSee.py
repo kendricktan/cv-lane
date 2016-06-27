@@ -9,7 +9,7 @@ from imutils.video.pivideostream import PiVideoStream
 
 
 class EyeCanSee(object):
-    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_update=0.025):
+    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_update=0.035):
         # Our video stream
         # If its not a usb webcam then get pi camera
         if not is_usb_webcam:
@@ -327,6 +327,10 @@ class EyeCanSee(object):
     def where_lane_be(self):
         while (float(time.time()-self.start_time) < self.period_update):
             pass
+
+        # updates time
+        self.start_time = time.time()
+
         # Camera grab frame and normalize it
         self.grab_frame()
         self.normalize_img()
@@ -338,11 +342,15 @@ class EyeCanSee(object):
         # Get contour meta data
         self.contour_metadata = self.get_contour_metadata()
 
+        # Object
+        self.where_object_be()
+
         # Find the center of the lanes (bottom and top) [we wanna be in between]
         self.center_coord_bottom, self.center_coord_top = self.get_centered_coord()
 
         # Gets relative error between top center and bottom center
         self.relative_error = self.get_errors()
+
 
         if self.debug:
             cv2.imshow('img', self.img_debug)
