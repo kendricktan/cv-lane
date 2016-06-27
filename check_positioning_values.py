@@ -54,10 +54,10 @@ for i in range(0, 5):  # For the amount of frames we want CV on
     print('Filtered value: %s'% filtered_value)
 
     if filtered_value < 0:
-        print('Left force: %s' % calibrated_value*50)
+        print('Left force: %s' % (calibrated_value*50.0))
 
     elif filtered_value > 0:
-        print('Right force: %s' % calibrated_value*50)
+        print('Right force: %s' % (calibrated_value*50.0))
 
     print('----')
 
