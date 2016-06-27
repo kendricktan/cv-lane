@@ -1,4 +1,3 @@
-import datetime
 import time
 
 import cv2
@@ -10,7 +9,7 @@ from imutils.video.pivideostream import PiVideoStream
 
 
 class EyeCanSee(object):
-    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_ms=20):
+    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_s=0.003):
         # Our video stream
         # If its not a usb webcam then get pi camera
         if not is_usb_webcam:
@@ -47,11 +46,11 @@ class EyeCanSee(object):
         # debug mode on? (to display processed images)
         self.debug = debug
 
-        # Time interval between in update (in ms)
-        self.period_ms = period_ms
+        # Time interval between in update (in s)
+        self.period_s = period_s
 
         # Starting time
-        self.start_time = datetime.datetime.now()
+        self.start_time = time.time() 
 
     # Mouse event handler for get_hsv
     def on_mouse(self, event, x, y, flag, param):
@@ -316,7 +315,7 @@ class EyeCanSee(object):
     # Where are we relative to our lane
     def where_lane_be(self):
         # Running once every period_ms
-        while int(self.millis_interval(self.start_time, datetime.datetime.now())) < self.period_ms:
+        while float(self.second_dif(self.start_time, time.time())) < self.period_ms:
             pass
 
         # Camera grab frame and normalize it
@@ -341,7 +340,7 @@ class EyeCanSee(object):
         self.relative_error = self.get_errors()
 
         # Update time instance
-        self.start_time = datetime.datetime.now()
+        self.start_time = time.time()
 
         if self.debug:
             # Drawing locations 
@@ -393,14 +392,9 @@ class EyeCanSee(object):
         print('Time taken: {:.2f}'.format(fps.elapsed()))
         print('~ FPS : {:.2f}'.format(fps.fps()))
 
-    # Get time difference in milliseconds
-    def millis_interval(self, start, end):
-        """start and end are datetime instances"""
-        diff = end - start
-        millis = diff.days * 24 * 60 * 60 * 1000
-        millis += diff.seconds * 1000
-        millis += diff.microseconds / 1000
-        return millis
+    # Get time difference in seconds 
+    def second_dif(self, start, end):
+        return (end-start)
 
     # Destructor
     def __del__(self):
