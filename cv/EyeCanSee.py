@@ -307,7 +307,7 @@ class EyeCanSee(object):
                     self.contour_metadata['left_top'] = (x+w, self.contour_metadata['left_top'][1])
 
                 if self.debug:
-                    cv2.circle(self.img_debug, (x, y), 5, (240, 32, 160), 2)
+                    cv2.circle(self.img_debug, (x+(w/2), y+(h/2)), 5, (240, 32, 160), 2)
 
         if self.debug:
             cv2.imshow('Blurred object', blurred_object)
