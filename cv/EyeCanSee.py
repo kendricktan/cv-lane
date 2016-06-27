@@ -9,7 +9,7 @@ from imutils.video.pivideostream import PiVideoStream
 
 
 class EyeCanSee(object):
-    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_s=0.020):
+    def __init__(self, center=int(cvsettings.CAMERA_WIDTH / 2), debug=False, is_usb_webcam=False, period_s=0.065):
         # Our video stream
         # If its not a usb webcam then get pi camera
         if not is_usb_webcam:
@@ -47,6 +47,7 @@ class EyeCanSee(object):
         self.debug = debug
 
         # Time interval between in update (in ms)
+        # FPS = 1/period_s
         self.period_s = period_s
 
         # Starting time
@@ -75,7 +76,7 @@ class EyeCanSee(object):
             cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP-2), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP + cvsettings.IMG_ROI_HEIGHT + 2), (0, 250, 0), 2)
 
             # Object
-            cv2.rectangle(self.img_debug, (0, cvsettings.HEIGHT_PADDING_TOP), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
+            cv2.rectangle(self.img_debug, (0, cvsettings.OBJECT_HEIGHT_PADDING), (cvsettings.CAMERA_WIDTH, cvsettings.HEIGHT_PADDING_TOP - cvsettings.OBJECT_HEIGHT_PADDING), (238, 130, 238), 2)
 
             self.hsv_frame = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
 
@@ -270,7 +271,7 @@ class EyeCanSee(object):
 
             mask_object = cv2.inRange(img_roi_object_hsv, lower, upper)
 
-        blurred_object = cv2.medianBlur(mask_object, 5)
+        blurred_object = cv2.medianBlur(mask_object, 25)
 
         # Finding position of object (if its there)
         _, contours, hierarchy = cv2.findContours(blurred_object.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -334,7 +335,7 @@ class EyeCanSee(object):
 
         # Finds objects and (and corrects lane position)
         # this overwrite contour_metadata
-        #self.where_object_be()
+        self.where_object_be()
 
         # Find the center of the lanes (bottom and top) [we wanna be in between]
         self.center_coord_bottom, self.center_coord_top = self.get_centered_coord()
@@ -392,6 +393,31 @@ class EyeCanSee(object):
         print('Time taken: {:.2f}'.format(fps.elapsed()))
         print('~ FPS : {:.2f}'.format(fps.fps()))
 
+    # Use this to save images to a location
+    def save_images(self, dirname='dump'):
+        import os
+        img_no = 1
+
+        # Makes the directory
+        if not os.path.exists('./' + dirname):
+            os.mkdir(dirname)
+
+        while True:
+            self.grab_frame()
+
+            if self.debug:
+                cv2.imshow('frame', self.img)
+
+            k = cv2.waitKey(1) & 0xFF
+
+            if k == ord('s'):
+                cv2.imwrite(os.path.join(dirname, 'dump_' + str(img_no) + '.jpg'), self.img)
+                img_no += 1
+
+            elif k == ord('q'):
+                break
+
+        cv2.destroyAllWindows()
     # Destructor
     def __del__(self):
         self.vs.stop()

@@ -20,7 +20,7 @@ camera = EyeCanSee()
 
 # Kalman filter
 kalman_filter = KalmanFilter(aisettings.VAR, aisettings.EST_VAR)
-kalman_filter.input_latest_noisy_measurement(0)
+#kalman_filter.input_latest_noisy_measurement(0)
 
 # PID for each region (if we do decide to add any)
 pid = PID(
@@ -30,7 +30,7 @@ pid = PID(
     min_threshold=aisettings.PID_MIN_VAL,
     max_threshold=aisettings.PID_MAX_VAL
 )
-pid.update(0)
+#pid.update(0)
 
 # Controllers
 car_controller = Controller()
@@ -45,7 +45,8 @@ raw_input("Please press any key to start driving *immediately*")
 print("Starting autonomous control now!")
 
 
-for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
+#for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
+while True:
     # Trys and get our lane
     camera.where_lane_be()
 

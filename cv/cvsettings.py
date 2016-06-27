@@ -26,8 +26,8 @@ HEIGHT_PADDING_TOP = int(CAMERA_HEIGHT / 1.8) # Where the top image ROI is gonna
 WIDTH_PADDING = 0
 IMG_ROI_HEIGHT = 20
 
-OBJECT_HSV_RANGE = [([0, 0, 0], [0, 0, 0])]
-OBJECT_HEIGHT_PADDING = 0
-OBJECT_AREA = 50
-FRAMES = 270  # How many frames to do CV for
+OBJECT_HSV_RANGE = [([130, 20, 50], [155, 50, 60])]
+OBJECT_HEIGHT_PADDING = 40
+OBJECT_AREA = 300
+FRAMES = 125  # How many frames to do CV for
 
