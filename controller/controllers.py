@@ -32,7 +32,7 @@ class Controller():
     def stop(self):
         self.ser.write('motor,0\n')
 
-    #####Servo ####
+    ##### Servo testing ####
     # Turns
     # range = 50 <= x <= 150
     # 50 = full right, 150 = full left
@@ -49,6 +49,10 @@ class Controller():
             val = 150
 
         self.ser.write('steer,' + str(val) + '\n')
+
+    # Turning for PID
+    def pid_turn(self, val, left=False, right=False):
+        self.turn(50*val, left=left, right=right)
 
     # Straigthens servo
     def straighten(self):

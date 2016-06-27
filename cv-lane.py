@@ -61,10 +61,10 @@ for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
     # Try to keep pid 0
 
     if filtered_value < 0:
-        car_controller.turn(calibrated_value, left=True)
+        car_controller.pid_turn(calibrated_value, left=True)
 
     elif filtered_value > 0:
-        car_controller.turn(calibrated_value, right=True)
+        car_controller.pid_turn(calibrated_value, right=True)
 
     # Doesn't work without sleep 0.03 or more for some reason...
     car_controller.run_speed(35)
