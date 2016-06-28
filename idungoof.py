@@ -7,3 +7,5 @@ time.sleep(0.5)
 
 car_controller.stop()
 car_controller.straighten()
+
+print 'Fixed your done goofed!'
