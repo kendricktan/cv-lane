@@ -67,11 +67,8 @@ while True:  # For the amount of frames we want CV on
         signal_handler(0, 0)
         break
 
-<<<<<<< HEAD
-=======
 #for i in range(0, cvsettings.FRAMES):  # For the amount of frames we want CV on
 while True:
->>>>>>> 358df2a2bfa092fbd9703601759854056e8beac7
     # Trys and get our lane
     camera.where_lane_be()
 
@@ -92,14 +89,9 @@ while True:
     elif filtered_value > 0:
         car_controller.pid_turn(calibrated_value, right=True)
 
-<<<<<<< HEAD
     car_controller.run_speed(60)
 
-
-=======
-    # Doesn't work without sleep 0.03 or more for some reason...
     car_controller.run_speed(35)
->>>>>>> 358df2a2bfa092fbd9703601759854056e8beac7
 
 # Turn everything off now that we're done and exit the program
 car_controller.straighten()
