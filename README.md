@@ -1,5 +1,7 @@
 # Lane detection using opencv
 
+![](http://i.makeagif.com/media/7-10-2016/UpemdQ.gif)
+
 ### This communicates with Jabelone's [car-controller](https://github.com/jabelone/car-controller/)
 Jabelone's car-controller is used to output the pwm signals to the steering servo and motor controller.  Read the set-up instructions for car-controller for wiring instructions.  Plug the car-controller arduino into the pi via USB so cv-lane can talk to it.
 
